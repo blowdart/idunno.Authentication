@@ -4,7 +4,7 @@
 using System;
 using idunno.Authentication;
 
-namespace Microsoft.AspNet.Builder
+namespace Microsoft.AspNetCore.Builder
 {
     /// <summary>
     /// Extension methods to add Basic authentication capabilities to an HTTP application pipeline.
@@ -30,19 +30,18 @@ namespace Microsoft.AspNet.Builder
         /// Adds the <see cref="BasicAuthenticationMiddleware"/> middleware to the specified <see cref="IApplicationBuilder"/>, which enables basic authentication capabilities.
         /// </summary>
         /// <param name="app">The <see cref="IApplicationBuilder"/> to add the middleware to.</param>
-        /// <param name="configureOptions">An action delegate to configure the provided <see cref="CookieAuthenticationOptions"/>.</param>
+        /// <param name="options">A <see cref="BasicAuthenticationOptions"/> that specifies options for the middleware.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns
-        public static IApplicationBuilder UseBasicAuthentication(this IApplicationBuilder app, Action<BasicAuthenticationOptions> configureOptions)
+        public static IApplicationBuilder UseBasicAuthentication(this IApplicationBuilder app, BasicAuthenticationOptions options)
         {
             if (app == null)
             {
                 throw new ArgumentNullException(nameof(app));
             }
 
-            var options = new BasicAuthenticationOptions();
-            if (configureOptions != null)
+            if (options == null)
             {
-                configureOptions(options);
+                throw new ArgumentNullException(nameof(options));
             }
 
             return app.UseMiddleware<BasicAuthenticationMiddleware>(options);

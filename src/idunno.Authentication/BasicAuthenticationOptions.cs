@@ -1,15 +1,17 @@
 ﻿// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using Microsoft.AspNet.Authentication;
 using System;
+using Microsoft.Extensions.Options;
 
-namespace idunno.Authentication
+using idunno.Authentication;
+
+namespace Microsoft.AspNetCore.Builder
 {
     /// <summary>
     /// Contains the options used by the BasicAuthenticationMiddleware
     /// </summary>
-    public class BasicAuthenticationOptions : AuthenticationOptions
+    public class BasicAuthenticationOptions : AuthenticationOptions, IOptions<BasicAuthenticationOptions>
     {
         private string _realm;
 
@@ -57,6 +59,14 @@ namespace idunno.Authentication
         /// and assign delegates only to the events it wants to process.
         /// </summary>
         public IBasicAuthenticationEvents Events { get; set; } = new BasicAuthenticationEvents();
+
+        BasicAuthenticationOptions IOptions<BasicAuthenticationOptions>.Value
+        {
+            get
+            {
+                return this;
+            }
+        }
 
         private bool IsAscii(string input)
         {

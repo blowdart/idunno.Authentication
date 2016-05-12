@@ -1,5 +1,7 @@
 ﻿# idunno.Authentication
 
+**Now updated for RC2 and the great namespace renaming of 2016. CORE ALL THE THINGS. Still not production ready though. Stop that.**
+
 This project contains an implementation of [Basic Authentication](https://tools.ietf.org/html/rfc1945#section-11) for ASP.NET Core. 
 
 It is meant as a demonstration of how to write authentication middleware and **not** as something you would seriously consider using.
@@ -21,10 +23,10 @@ You can also specify the Realm used to isolate areas of a web site from one anot
 For example;
 
 ```c#
-app.UseBasicAuthentication(options => 
+app.UseBasicAuthentication(new BasicAuthenticationOptions 
 {
-    options.Realm = "idunno";
-    options.Events = new BasicAuthenticationEvents
+    Realm = "idunno",
+    Events = new BasicAuthenticationEvents
     {
         OnValidateCredentials = context =>
         {
@@ -35,14 +37,16 @@ app.UseBasicAuthentication(options =>
                     new Claim(ClaimTypes.NameIdentifier, context.Username)
                 };
 
-                context.AuthenticationTicket = new AuthenticationTicket(
-                    new ClaimsPrincipal(new ClaimsIdentity(claims, context.Options.AuthenticationScheme)),
-                    new AuthenticationProperties(), context.Options.AuthenticationScheme);
+                context.Ticket = new AuthenticationTicket(
+                    new ClaimsPrincipal(
+					    new ClaimsIdentity(claims, context.Options.AuthenticationScheme)),
+                    new AuthenticationProperties(), 
+					context.Options.AuthenticationScheme);
              }
 
              return Task.FromResult<object>(null);
          }
-     };
+     }
 });
 ```
 

@@ -2,10 +2,12 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.AspNet.Authentication;
-using Microsoft.AspNet.Builder;
+using System.Text.Encodings.Web;
+
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.WebEncoders;
 
 namespace idunno.Authentication
 {
@@ -30,7 +32,7 @@ namespace idunno.Authentication
         public BasicAuthenticationMiddleware(
             RequestDelegate next,
             ILoggerFactory loggerFactory,
-            IUrlEncoder encoder,
+            UrlEncoder encoder,
             BasicAuthenticationOptions options)
             : base(next, options, loggerFactory, encoder)
         {

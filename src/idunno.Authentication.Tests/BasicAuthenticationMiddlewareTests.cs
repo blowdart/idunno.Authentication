@@ -10,12 +10,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-using Microsoft.AspNet.Authentication;
-using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Http;
-using Microsoft.AspNet.Http.Authentication;
-using Microsoft.AspNet.TestHost;
-
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Authentication;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 
 using Microsoft.Net.Http.Headers;
@@ -37,9 +37,7 @@ namespace idunno.Authentication.Tests
         [Fact]
         public async Task NormalRequestPassesThrough()
         {
-            var server = CreateServer(options =>
-            {
-            });
+            var server = CreateServer(new BasicAuthenticationOptions());
             var response = await server.CreateClient().GetAsync("http://example.com/");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
@@ -47,9 +45,7 @@ namespace idunno.Authentication.Tests
         [Fact]
         public async Task NormalWithAuthRequestPassesThrough()
         {
-            var server = CreateServer(options =>
-            {
-            });
+            var server = CreateServer(new BasicAuthenticationOptions());
 
             var transaction = await SendAsync(server, "http://example.com/", "username", "password");       
             Assert.Equal(HttpStatusCode.OK, transaction.Response.StatusCode);
@@ -58,9 +54,7 @@ namespace idunno.Authentication.Tests
         [Fact]
         public async Task ProtectedPathReturnsUnauthorizedWithWWWAuthenicateHeaderAndScheme()
         {
-            var server = CreateServer(options =>
-            {
-            });
+            var server = CreateServer(new BasicAuthenticationOptions());
             var response = await server.CreateClient().GetAsync("http://example.com/unauthorized");
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             Assert.Equal(1, response.Headers.WwwAuthenticate.Count);
@@ -71,9 +65,9 @@ namespace idunno.Authentication.Tests
         [Fact]
         public async Task ProtectedPathReturnsUnauthorizedWithWWWAuthenicateHeaderAndSchemeWithSpecifiedRealm()
         {
-            var server = CreateServer(options =>
+            var server = CreateServer(new BasicAuthenticationOptions
             {
-                options.Realm = "realm";
+                Realm = "realm"
             });
             var response = await server.CreateClient().GetAsync("http://example.com/unauthorized");
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -85,9 +79,7 @@ namespace idunno.Authentication.Tests
         [Fact]
         public async Task ForbiddenPathReturnsForbiddenStatus()
         {
-            var server = CreateServer(options =>
-            {
-            });
+            var server = CreateServer(new BasicAuthenticationOptions());
             var response = await server.CreateClient().GetAsync("http://example.com/forbidden");
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         }
@@ -95,9 +87,7 @@ namespace idunno.Authentication.Tests
         [Fact]
         public async Task ChallengePathReturnsUnauthorizedWithWWWAuthenicateHeaderAndSchemeWhenNoAuthenticateHeaderIsPresent()
         {
-            var server = CreateServer(options =>
-            {
-            });
+            var server = CreateServer(new BasicAuthenticationOptions());
             var response = await server.CreateClient().GetAsync("http://example.com/challenge");
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             Assert.Equal(1, response.Headers.WwwAuthenticate.Count);
@@ -108,9 +98,9 @@ namespace idunno.Authentication.Tests
         [Fact]
         public async Task ChallengePathReturnsUnauthorizedWithWWWAuthenicateHeaderSchemeAndConfiguredRealmWhenNoAuthenticateHeaderIsPresent()
         {
-            var server = CreateServer(options =>
+            var server = CreateServer(new BasicAuthenticationOptions
             {
-                options.Realm = "realm";
+                Realm = "realm"
             });
             var response = await server.CreateClient().GetAsync("http://example.com/challenge");
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -122,9 +112,9 @@ namespace idunno.Authentication.Tests
         [Fact]
         public async Task ChallengePathReturnsForbiddenWhenAnAuthorizeHeaderIsSentAndPassesValidation()
         {
-            var server = CreateServer(options =>
+            var server = CreateServer(new BasicAuthenticationOptions
             {
-                options.Events = new BasicAuthenticationEvents
+                Events = new BasicAuthenticationEvents
                 {
                     OnValidateCredentials = context =>
                     {
@@ -133,7 +123,7 @@ namespace idunno.Authentication.Tests
                             new Claim(ClaimTypes.NameIdentifier, context.Username)
                         };
 
-                        context.AuthenticationTicket = new AuthenticationTicket(
+                        context.Ticket = new AuthenticationTicket(
                             new ClaimsPrincipal(new ClaimsIdentity(claims, context.Options.AuthenticationScheme)),
                             new AuthenticationProperties(), context.Options.AuthenticationScheme);
 
@@ -141,7 +131,7 @@ namespace idunno.Authentication.Tests
 
                         return Task.FromResult<object>(null);
                     }
-                };
+                }
             });
 
             var transaction = await SendAsync(server, "http://example.com/challenge", "username", "password");
@@ -151,16 +141,16 @@ namespace idunno.Authentication.Tests
         [Fact]
         public async Task ChallengePathReturnsUnauthorizeWhenAnAuthorizeHeaderIsSentAndFailsValidation()
         {
-            var server = CreateServer(options =>
+            var server = CreateServer(new BasicAuthenticationOptions
             {
-                options.Events = new BasicAuthenticationEvents
+                Events = new BasicAuthenticationEvents
                 {
                     OnValidateCredentials = context =>
                     {
 
                         return Task.FromResult<object>(null);
                     }
-                };
+                }
             });
 
             var transaction = await SendAsync(server, "http://example.com/challenge", "username", "password");
@@ -171,16 +161,16 @@ namespace idunno.Authentication.Tests
         public async Task ValidateOnValidateCredentialsCalledWhenCredentialsProvided()
         {
             bool called = false;
-            var server = CreateServer(options =>
+            var server = CreateServer(new BasicAuthenticationOptions
             {
-                options.Events = new BasicAuthenticationEvents
+                Events = new BasicAuthenticationEvents
                 {
                     OnValidateCredentials = context =>
                     {
                         called = true;
                         return Task.FromResult<object>(null);
                     }
-                };
+                }
             });
 
             var transaction = await SendAsync(server, "http://example.com/", "username", "password");
@@ -191,30 +181,29 @@ namespace idunno.Authentication.Tests
         public async Task ValidateOnValidateCredentialsIsNotCalledWhenNoCredentialsAreProvided()
         {
             bool called = false;
-            var server = CreateServer(options =>
+            var server = CreateServer(new BasicAuthenticationOptions
             {
-                options.Events = new BasicAuthenticationEvents
+                Events = new BasicAuthenticationEvents
                 {
                     OnValidateCredentials = context =>
                     {
                         called = true;
                         return Task.FromResult<object>(null);
                     }
-                };
+                }
             });
 
             var transaction = await SendAsync(server, "http://example.com/");
             Assert.Equal(false, called);
         }
 
-               // Test for onAuthenticationFailed call.
-
         private static TestServer CreateServer(
-            Action<BasicAuthenticationOptions> configureOptions, 
+            BasicAuthenticationOptions configureOptions, 
             Func<HttpContext, bool> handler = null,
             Uri baseAddress = null)
         {
-            var server = TestServer.Create(app =>
+            var builder = new WebHostBuilder()
+                .Configure(app =>
             {
                 if (configureOptions != null)
                 {
@@ -247,8 +236,10 @@ namespace idunno.Authentication.Tests
                         await next();
                     }
                 });
-            },
-            services => services.AddAuthentication());
+            })
+            .ConfigureServices(services => services.AddAuthentication());
+
+            var server = new TestServer(builder);
             server.BaseAddress = baseAddress;
             return server;
         }

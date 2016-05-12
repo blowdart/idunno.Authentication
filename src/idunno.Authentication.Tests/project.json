@@ -1,25 +1,39 @@
 ﻿{
   "version": "1.0.0-*",
   "description": "Tests for idunno.Authentication",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/blowdart/idunno.Authentication"
-  },
-  "compilationOptions": {
+  "buildOptions": {
     "warningsAsErrors": true
   },
   "dependencies": {
+    "dotnet-test-xunit": "1.0.0-*",
+    "Microsoft.NETCore.Platforms": "1.0.1-*",
     "idunno.Authentication": "1.0.0-*",
-    "Microsoft.AspNet.TestHost": "1.0.0-rc1-final",
-    "Microsoft.AspNet.Testing": "1.0.0-rc1-final",
     "xunit": "2.1.0",
-    "xunit.runner.dnx": "2.1.0-rc1-build204"
-  },
-  "commands": {
-    "test": "xunit.runner.dnx"
+    "Microsoft.AspNetCore.TestHost": "1.0.0-rc2-20634"
   },
   "frameworks": {
-    "dnx451": { },
-    "dnxcore50": { }
-  }
+    "netcoreapp1.0": {
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "version": "1.0.0-*",
+          "type": "platform"
+        },
+        "System.Diagnostics.Process": "4.1.0-*"
+      },
+      "imports": [
+        "dnxcore50",
+        "portable-net451+win8"
+      ]
+    },
+    "net451": {
+      "frameworkAssemblies": {
+        "System.Runtime": "",
+        "System.Threading.Tasks": ""
+      },
+      "dependencies": {
+        "xunit.runner.console": "2.1.0"
+      }
+    }
+  },
+  "testRunner": "xunit"
 }

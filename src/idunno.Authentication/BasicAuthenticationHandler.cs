@@ -5,9 +5,10 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 
-using Microsoft.AspNet.Authentication;
-using Microsoft.AspNet.Http;
-using Microsoft.AspNet.Http.Features.Authentication;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
@@ -22,7 +23,7 @@ namespace idunno.Authentication
             string authorizationHeader = Request.Headers["Authorization"];
             if (string.IsNullOrEmpty(authorizationHeader))
             {
-                return AuthenticateResult.Failed("No authorization header.");
+                return AuthenticateResult.Fail("No authorization header.");
             }
 
             if (!authorizationHeader.StartsWith(_Scheme + ' ', StringComparison.OrdinalIgnoreCase))
@@ -36,7 +37,7 @@ namespace idunno.Authentication
             {
                 const string noCredentialsMessage = "No credentials";
                 Logger.LogInformation(noCredentialsMessage);
-                return AuthenticateResult.Failed(noCredentialsMessage);
+                return AuthenticateResult.Fail(noCredentialsMessage);
             }
 
             try
@@ -56,7 +57,7 @@ namespace idunno.Authentication
                 {
                     const string missingDelimiterMessage = "Invalid credentials, missing delimiter.";
                     Logger.LogInformation(missingDelimiterMessage);
-                    return AuthenticateResult.Failed(missingDelimiterMessage);
+                    return AuthenticateResult.Fail(missingDelimiterMessage);
                 }
 
                 var username = decodedCredentials.Substring(0, delimiterIndex);
@@ -70,15 +71,15 @@ namespace idunno.Authentication
 
                 await Options.Events.ValidateCredentials(validateCredentialsContext);
 
-                if (validateCredentialsContext.AuthenticationTicket != null)
+                if (validateCredentialsContext.Ticket != null)
                 {
                     Logger.LogInformation($"Credentials validated for {username}");
-                    return AuthenticateResult.Success(validateCredentialsContext.AuthenticationTicket);
+                    return AuthenticateResult.Success(validateCredentialsContext.Ticket);
                 }
                 else
                 {
                     Logger.LogInformation($"Credential validation failed for {username}");
-                    return AuthenticateResult.Failed("Invalid credentials.");
+                    return AuthenticateResult.Fail("Invalid credentials.");
                 }
             }
             catch (Exception ex)
@@ -91,7 +92,7 @@ namespace idunno.Authentication
                 await Options.Events.AuthenticationFailed(authenticationFailedContext);
                 if (authenticationFailedContext.HandledResponse)
                 {
-                    return AuthenticateResult.Success(authenticationFailedContext.AuthenticationTicket);
+                    return AuthenticateResult.Success(authenticationFailedContext.Ticket);
                 }
                 if (authenticationFailedContext.Skipped)
                 {

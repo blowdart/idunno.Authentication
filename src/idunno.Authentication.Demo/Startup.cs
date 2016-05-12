@@ -1,12 +1,12 @@
 ﻿using System.Security.Claims;
 using System.Threading.Tasks;
 
-using Microsoft.AspNet.Authentication;
-using Microsoft.AspNet.Authorization;
-using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Hosting;
-using Microsoft.AspNet.Http.Authentication;
-using Microsoft.AspNet.Mvc.Filters;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Authentication;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 
 using idunno.Authentication;
@@ -36,8 +36,6 @@ namespace idunno.Authentication.Demo
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            app.UseIISPlatformHandler();
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -45,10 +43,10 @@ namespace idunno.Authentication.Demo
 
             app.UseStatusCodePages();
 
-            app.UseBasicAuthentication(options => 
+            app.UseBasicAuthentication(new BasicAuthenticationOptions
             {
-                options.Realm = "idunno";
-                options.Events = new BasicAuthenticationEvents
+                Realm = "idunno",
+                Events = new BasicAuthenticationEvents
                 {
                     OnValidateCredentials = context =>
                     {
@@ -60,14 +58,16 @@ namespace idunno.Authentication.Demo
                                 new Claim(ClaimTypes.Name, context.Username)
                             };
 
-                            context.AuthenticationTicket = new AuthenticationTicket(
-                                new ClaimsPrincipal(new ClaimsIdentity(claims, context.Options.AuthenticationScheme)),
-                                new AuthenticationProperties(), context.Options.AuthenticationScheme);
+                            context.Ticket = new AuthenticationTicket(
+                                new ClaimsPrincipal(
+                                    new ClaimsIdentity(claims, context.Options.AuthenticationScheme)),
+                                new AuthenticationProperties(), 
+                                context.Options.AuthenticationScheme);
                         }
 
                         return Task.FromResult<object>(null);
                     }
-                };
+                }
             });
 
             app.UseMvc(routes =>
@@ -77,8 +77,5 @@ namespace idunno.Authentication.Demo
                      template: "{controller=Home}/{action=Index}/{id?}");
             });
         }
-
-        // Entry point for the application.
-        public static void Main(string[] args) => WebApplication.Run<Startup>(args);
     }
 }
