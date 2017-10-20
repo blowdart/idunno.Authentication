@@ -47,6 +47,11 @@ namespace idunno.Authentication
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
+            if (!Request.IsHttps)
+            {
+                return AuthenticateResult.NoResult();
+            }
+
             string authorizationHeader = Request.Headers["Authorization"];
             if (string.IsNullOrEmpty(authorizationHeader))
             {

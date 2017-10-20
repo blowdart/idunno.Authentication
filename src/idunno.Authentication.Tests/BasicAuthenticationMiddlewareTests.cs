@@ -163,6 +163,26 @@ namespace idunno.Authentication.Tests
         }
 
         [Fact]
+        public async Task ValidateOnValidateCredentialsIsNotCalledOverHttp()
+        {
+            bool called = false;
+            var server = CreateServer(new BasicAuthenticationOptions
+            {
+                Events = new BasicAuthenticationEvents
+                {
+                    OnValidateCredentials = context =>
+                    {
+                        called = true;
+                        return Task.FromResult<object>(null);
+                    }
+                }
+            });
+
+            var transaction = await SendAsync(server, "http://example.com/", "username", "password");
+            Assert.False(called);
+        }
+
+        [Fact]
         public async Task ValidateOnValidateCredentialsIsNotCalledWhenNoCredentialsAreProvided()
         {
             bool called = false;
