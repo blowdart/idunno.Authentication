@@ -100,7 +100,7 @@ I'd never recommend you use basic authentication in production, but, if you must
     services.Configure<MvcOptions>(options =>
     {
         options.Filters.Add(new RequireHttpsAttribute());
-    }
+    });
     ```
 7. Implement [HSTS](https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security) and [preload](https://hstspreload.org/) 
    your site if your site is going to be accessed through a browser.
