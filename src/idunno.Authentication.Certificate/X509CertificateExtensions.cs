@@ -17,15 +17,17 @@ namespace idunno.Authentication.Certificate
 
         public static string SHA256Thumprint(this X509Certificate2 certificate)
         {
-            var hasher = SHA256.Create();
-            var certificateHash = hasher.ComputeHash(certificate.RawData);
-            string hashAsString = string.Empty;
-            foreach (byte hashByte in certificateHash)
+            using (var hasher = SHA256.Create())
             {
-                hashAsString += hashByte.ToString("x2", CultureInfo.InvariantCulture);
-            }
+                var certificateHash = hasher.ComputeHash(certificate.RawData);
+                string hashAsString = string.Empty;
+                foreach (byte hashByte in certificateHash)
+                {
+                    hashAsString += hashByte.ToString("x2", CultureInfo.InvariantCulture);
+                }
 
-            return hashAsString;
+                return hashAsString;
+            }
         }
     }
 }
