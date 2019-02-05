@@ -12,5 +12,10 @@ namespace idunno.Authentication.Certificate
         /// The default value used for CertificateAuthenticationOptions.AuthenticationScheme
         /// </summary>
         public const string AuthenticationScheme = "Certificate";
+
+        /// <summary>
+        /// The name used for the items dictionary on AuthenticateResult
+        /// </summary>
+        public const string CertificateItemsKey = AuthenticationScheme;
     }
 }

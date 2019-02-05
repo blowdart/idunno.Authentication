@@ -112,7 +112,15 @@ namespace idunno.Authentication.Certificate
                 if (validateCertificateContext.Result != null &&
                     validateCertificateContext.Result.Succeeded)
                 {
-                    var ticket = new AuthenticationTicket(validateCertificateContext.Principal, Scheme.Name);
+                    var props = new AuthenticationProperties
+                    {
+                        Items =
+                        {
+                            { CertificateAuthenticationDefaults.CertificateItemsKey, clientCertificate.GetRawCertDataString() }
+                        }
+                    };
+
+                    var ticket = new AuthenticationTicket(validateCertificateContext.Principal, props, Scheme.Name);
                     return AuthenticateResult.Success(ticket);
                 }
 
