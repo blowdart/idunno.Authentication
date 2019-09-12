@@ -232,8 +232,9 @@ services.AddCertificateHeaderForwarding(options =>
     options.CertificateHeader = "YOUR_CUSTOM_HEADER_NAME";
     options.HeaderConverter = (headerValue) => 
     {
-        var clientCertificate = 
-           /* some weird conversion logic to create an X509Certificate2 */
+        // for Nginx use HttpUtility.UrlDecode
+        var clientCertificate = new X509Certificate2(HttpUtility.UrlDecodeToBytes(headerValue));
+           /* or some other weird conversion logic to create an X509Certificate2 */
         return clientCertificate;
     }
 });
