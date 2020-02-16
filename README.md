@@ -31,7 +31,7 @@ nuget packages are available for the ASP.NET Core 2.0 versions of the authentica
 
 | Version | Notes |
 |---------|-------|
-|2.2.0    | Updated nuget license and package icon, added property for supressing the WWW-Authenticate header [scheme](https://github.com/blowdart/idunno.Authentication/issues/36) |
+|2.2.0    | Basic auth no longer throws exception when [invalid base64 data sent in authentication header](https://github.com/blowdart/idunno.Authentication/issues/40)<br>Added property for suppressing the WWW-Authenticate header [scheme](https://github.com/blowdart/idunno.Authentication/issues/36)<br>Updated nuget license and package icon |
 |2.1.1    | Added [SourceLink](https://github.com/dotnet/sourcelink/blob/master/README.md)<br>Changed library dependencies to remove demands for exact versions, following the [.NET Core open-source library guidance](https://docs.microsoft.com/en-us/dotnet/standard/library-guidance/)<br>nuget package is now signed
 |2.1.0    | Added Certificate Authentication<br>Fixed Basic Authentication event handling<br>Packages are now Authenticode signed |
 
