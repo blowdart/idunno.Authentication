@@ -148,7 +148,7 @@ namespace idunno.Authentication.Basic
             }
         }
 
-        protected override Task HandleChallengeAsync(AuthenticationProperties properties)
+        protected override async Task HandleChallengeAsync(AuthenticationProperties properties)
         {
             if (!Request.IsHttps && !Options.AllowInsecureProtocol)
             {
@@ -156,7 +156,8 @@ namespace idunno.Authentication.Basic
                 Logger.LogInformation(insecureProtocolMessage);
                 Response.StatusCode = 500;
                 var encodedResponseText = Encoding.UTF8.GetBytes(insecureProtocolMessage);
-                Response.Body.Write(encodedResponseText, 0, encodedResponseText.Length);
+                await Response.Body.WriteAsync(encodedResponseText, 0, encodedResponseText.Length)
+                    .ConfigureAwait(false);
             }
             else
             {
@@ -167,8 +168,6 @@ namespace idunno.Authentication.Basic
                     Response.Headers.Append(HeaderNames.WWWAuthenticate, headerValue);
                 }
             }
-
-            return Task.CompletedTask;
         }
     }
 }
