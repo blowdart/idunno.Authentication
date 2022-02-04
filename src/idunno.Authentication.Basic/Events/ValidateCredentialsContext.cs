@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
 namespace idunno.Authentication.Basic
@@ -14,15 +13,18 @@ namespace idunno.Authentication.Basic
         /// </summary>
         /// <param name="context">The HttpContext the validate context applies too.</param>
         /// <param name="scheme">The scheme used when the Basic Authentication handler was registered.</param>
-        /// <param name="options">The <see cref="BasicAuthenticationOptions"/> for the instance of
-        /// <see cref="BasicAuthenticationMiddleware"/> creating this instance.</param>
+        /// <param name="options">The <see cref="BasicAuthenticationOptions"/> for the instance of <see cref="BasicAuthenticationHandler"/> creating this instance.</param>
         /// <param name="ticket">Contains the initial values for the identity.</param>
         public ValidateCredentialsContext(
             HttpContext context,
             AuthenticationScheme scheme,
-            BasicAuthenticationOptions options)
+            BasicAuthenticationOptions options,
+            string username,
+            string password)
             : base(context, scheme, options)
         {
+            Username = username;
+            Password = password;
         }
 
         /// <summary>

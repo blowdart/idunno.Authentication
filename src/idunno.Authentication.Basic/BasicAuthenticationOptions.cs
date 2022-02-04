@@ -7,14 +7,11 @@ using Microsoft.AspNetCore.Authentication;
 namespace idunno.Authentication.Basic
 {
     /// <summary>
-    /// Contains the options used by the BasicAuthenticationMiddleware
-    /// </summary>
-    /// <summary>
-    /// Contains the options used by the BasicAuthenticationMiddleware
+    /// Contains the options used by the <see cref="BasicAuthenticationHandler"/>
     /// </summary>
     public class BasicAuthenticationOptions : AuthenticationSchemeOptions
     {
-        private string _realm;
+        private string? _realm;
 
         /// <summary>
         /// Create an instance of the options initialized with the default values
@@ -33,7 +30,7 @@ namespace idunno.Authentication.Basic
         /// set of protection spaces, each with its own authentication scheme and/or
         /// authorization database.
         /// </remarks>
-        public string Realm
+        public string? Realm
         {
             get
             {
@@ -42,7 +39,7 @@ namespace idunno.Authentication.Basic
 
             set
             {
-                if (!string.IsNullOrEmpty(value) && !IsAscii(value))
+                if (!string.IsNullOrEmpty(value) && !IsAscii(value!))
                 {
                     throw new ArgumentException("Realm must be US ASCII");
                 }
@@ -83,14 +80,11 @@ namespace idunno.Authentication.Basic
         /// The application may implement the interface fully, or it may create an instance of BasicAuthenticationEvents
         /// and assign delegates only to the events it wants to process.
         /// </summary>
-        public new BasicAuthenticationEvents Events
-
+        public new BasicAuthenticationEvents? Events
         {
-            get { return (BasicAuthenticationEvents)base.Events; }
-
+            get { return (BasicAuthenticationEvents?)base.Events; }
             set { base.Events = value; }
         }
-
 
         private static bool IsAscii(string input)
         {

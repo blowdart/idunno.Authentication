@@ -13,9 +13,11 @@ namespace idunno.Authentication.Basic
         public BasicAuthenticationFailedContext(
             HttpContext context,
             AuthenticationScheme scheme,
-            BasicAuthenticationOptions options)
+            BasicAuthenticationOptions options,
+            Exception exception)
             : base(context, scheme, options)
         {
+            Exception = exception;
         }
 
         public Exception Exception { get; set; }

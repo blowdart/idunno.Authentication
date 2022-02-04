@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Text.Encodings.Web;
 using System.Text;
@@ -12,7 +13,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
-using System.Globalization;
 
 namespace idunno.Authentication.Basic
 {
@@ -34,7 +34,7 @@ namespace idunno.Authentication.Basic
         /// </summary>
         protected new BasicAuthenticationEvents Events
         {
-            get { return (BasicAuthenticationEvents)base.Events; }
+            get { return (BasicAuthenticationEvents)base.Events!; }
             set { base.Events = value; }
         }
 
@@ -107,18 +107,14 @@ namespace idunno.Authentication.Basic
                 var username = decodedCredentials.Substring(0, delimiterIndex);
                 var password = decodedCredentials.Substring(delimiterIndex + 1);
 
-                var validateCredentialsContext = new ValidateCredentialsContext(Context, Scheme, Options)
-                {
-                    Username = username,
-                    Password = password
-                };
+                var validateCredentialsContext = new ValidateCredentialsContext(Context, Scheme, Options, username, password);
 
                 await Events.ValidateCredentials(validateCredentialsContext);
 
                 if (validateCredentialsContext.Result != null &&
                     validateCredentialsContext.Result.Succeeded)
                 {
-                    var ticket = new AuthenticationTicket(validateCredentialsContext.Principal, Scheme.Name);
+                    var ticket = new AuthenticationTicket(validateCredentialsContext.Principal!, Scheme.Name);
                     return AuthenticateResult.Success(ticket);
                 }
 
@@ -132,10 +128,7 @@ namespace idunno.Authentication.Basic
             }
             catch (Exception ex)
             {
-                var authenticationFailedContext = new BasicAuthenticationFailedContext(Context, Scheme, Options)
-                {
-                    Exception = ex
-                };
+                var authenticationFailedContext = new BasicAuthenticationFailedContext(Context, Scheme, Options, ex);
 
                 await Events.AuthenticationFailed(authenticationFailedContext);
 

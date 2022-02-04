@@ -25,7 +25,7 @@ namespace Microsoft.AspNetCore.Builder
         public static AuthenticationBuilder AddBasic(
             this AuthenticationBuilder builder,
             string authenticationScheme,
-            Action<BasicAuthenticationOptions> configureOptions)
+            Action<BasicAuthenticationOptions>? configureOptions)
         {
             if (builder == null)
             {
