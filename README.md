@@ -33,6 +33,7 @@ nuget packages are available for the ASP.NET Core 2.0 versions of the authentica
 
 | Version | Notes |
 |---------|-------|
+|2.2.3    | Basic auth now multi-targets [.NET 5 and 6](https://github.com/blowdart/idunno.Authentication/issues/51) and everything now has reproducible builds |
 |2.2.2    | Basic auth now [multi-targets](https://github.com/blowdart/idunno.Authentication/issues/46) Core 2.1, 3.0 and 3.1 |
 |2.2.1    | Basic auth now [returns a 421 request when a request is issued over HTTP](https://github.com/blowdart/idunno.Authentication/issues/44), unless AllowInsecureProtocol is set |
 |2.2.0    | Basic auth no longer throws exception when [invalid base64 data sent in authentication header](https://github.com/blowdart/idunno.Authentication/issues/40)<br>Added property for suppressing the WWW-Authenticate header [scheme](https://github.com/blowdart/idunno.Authentication/issues/36)<br>Updated nuget license and package icon |
