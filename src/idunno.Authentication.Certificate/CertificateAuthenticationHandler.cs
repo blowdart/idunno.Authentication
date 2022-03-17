@@ -169,7 +169,7 @@ namespace idunno.Authentication.Certificate
                 revocationMode = X509RevocationMode.NoCheck;
             }
 
-            X509ChainPolicy chainPolicy = new X509ChainPolicy
+            var chainPolicy = new X509ChainPolicy
             {
                 RevocationFlag = revocationFlag,
                 RevocationMode = revocationMode,

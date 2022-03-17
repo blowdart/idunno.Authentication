@@ -40,12 +40,6 @@ namespace idunno.Authentication.Basic
 
         protected override Task<object> CreateEventsAsync() => Task.FromResult<object>(new BasicAuthenticationEvents());
 
-        /// <summary>
-        /// Creates a new instance of the events instance.
-        /// </summary>
-        /// <returns>A new instance of the events instance.</returns>
-        //protected override Task<object> CreateEventsAsync() => Task.FromResult<object>(new BasicAuthenticationEvents());
-
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             string authorizationHeader = Request.Headers["Authorization"];
@@ -95,7 +89,6 @@ namespace idunno.Authentication.Basic
                     return AuthenticateResult.Fail(logMessage);
                 }
 
-
                 var delimiterIndex = decodedCredentials.IndexOf(":", StringComparison.OrdinalIgnoreCase);
                 if (delimiterIndex == -1)
                 {
@@ -137,7 +130,7 @@ namespace idunno.Authentication.Basic
                     Exception = ex
                 };
 
-                await Events.AuthenticationFailed(authenticationFailedContext);
+                await Events.AuthenticationFailed(authenticationFailedContext).ConfigureAwait(true);
 
                 if (authenticationFailedContext.Result != null)
                 {

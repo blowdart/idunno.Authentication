@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Tests for idunno.Authentication</Description>
+    <Description>Tests for idunno.Authentication.Certificate</Description>
     <DebugType>Full</DebugType>
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
@@ -28,7 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\idunno.Authentication.Basic\idunno.Authentication.Basic.csproj" />
     <ProjectReference Include="..\..\src\idunno.Authentication.Certificate\idunno.Authentication.Certificate.csproj" />
   </ItemGroup>
 

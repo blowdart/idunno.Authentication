@@ -18,4 +18,7 @@
   <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
 </Project>

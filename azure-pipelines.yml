@@ -247,3 +247,33 @@ stages:
           - publish: $(Pipeline.Workspace)\BuildPackages
             displayName: Publish signed artifacts
             artifact: SignedPackages
+
+- stage: Release Development Packages
+  dependsOn: Build
+  condition: |
+    and(
+      succeeded('Build'),
+      not(startsWith(variables['Build.sourceBranch'], 'refs/heads/rel')),
+      not(eq(variables['build.reason'], 'PullRequest'))
+    )
+  jobs:
+  - job: Release Unsigned
+    pool:
+      vmImage: 'windows-latest'
+
+    steps:
+    # .NET 6
+    - task: UseDotNet@2
+      displayName: 'Install .NET Core 6.0.x SDK'
+      inputs:
+        version: '6.0.x'
+        packageType: 'sdk'
+
+    - task: NuGetAuthenticate@0
+      displayName: 'NuGet Authenticate'
+    - task: NuGetCommand@2
+      displayName: 'NuGet push'
+      inputs:
+        command: push
+        publishVstsFeed: 'idunno.Authentication/idunno.Authentication.Builds'
+        allowPackageConflicts: false

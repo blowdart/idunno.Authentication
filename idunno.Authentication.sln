@@ -10,6 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6462A7D2-501
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E2FF6F9D-3B6D-4D51-8EE5-F3A8789B0B96}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		azure-pipelines.yml = azure-pipelines.yml
 		Directory.Build.props = Directory.Build.props
 		icon.png = icon.png
@@ -27,13 +28,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "idunno.Authentication.Certi
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{035D46E2-9278-4260-903B-66055D6CA268}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "idunno.Authentication.Test", "test\idunno.Authentication.Test\idunno.Authentication.Test.csproj", "{B5442738-A8FB-4923-9EC5-3B6512DCF30C}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{AE540C4C-DE07-49DB-81BD-B77C1F9EB8BF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "idunno.Authentication.Basic.Sample", "samples\idunno.Authentication.Basic.Sample\idunno.Authentication.Basic.Sample.csproj", "{BB3C0698-1736-491C-B621-A78D00CBF0CA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "idunno.Authentication.Certificate.Sample", "samples\idunno.Authentication.Certificate.Sample\idunno.Authentication.Certificate.Sample.csproj", "{E78E32F6-B94F-4ED3-9A33-3CE500C61AE6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "idunno.Authentication.SharedKey", "src\idunno.Authentication.SharedKey\idunno.Authentication.SharedKey.csproj", "{1F0D1711-6A93-4428-A404-8F1F13AD5D61}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "idunno.Authentication.Certificate.Test", "test\idunno.Authentication.Certificate.Test\idunno.Authentication.Certificate.Test.csproj", "{6E25A829-BABC-41EE-80C2-56FACE3AA49B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "idunno.Authentication.SharedKey.Test", "test\idunno.Authentication.SharedKey.Test\idunno.Authentication.SharedKey.Test.csproj", "{83CA0C3E-7B9E-4CFA-A0A6-1258940964CB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "idunno.Authentication.Basic.Test", "test\idunno.Authentication.Basic.Test\idunno.Authentication.Basic.Test.csproj", "{116A502B-8196-4005-A067-2F8CA7ABC247}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,10 +56,6 @@ Global
 		{E6CA8E9A-FC6F-4CA5-AE5A-56BEEB6FEA60}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E6CA8E9A-FC6F-4CA5-AE5A-56BEEB6FEA60}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E6CA8E9A-FC6F-4CA5-AE5A-56BEEB6FEA60}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B5442738-A8FB-4923-9EC5-3B6512DCF30C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B5442738-A8FB-4923-9EC5-3B6512DCF30C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B5442738-A8FB-4923-9EC5-3B6512DCF30C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B5442738-A8FB-4923-9EC5-3B6512DCF30C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BB3C0698-1736-491C-B621-A78D00CBF0CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BB3C0698-1736-491C-B621-A78D00CBF0CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BB3C0698-1736-491C-B621-A78D00CBF0CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -61,6 +64,22 @@ Global
 		{E78E32F6-B94F-4ED3-9A33-3CE500C61AE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E78E32F6-B94F-4ED3-9A33-3CE500C61AE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E78E32F6-B94F-4ED3-9A33-3CE500C61AE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F0D1711-6A93-4428-A404-8F1F13AD5D61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F0D1711-6A93-4428-A404-8F1F13AD5D61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F0D1711-6A93-4428-A404-8F1F13AD5D61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F0D1711-6A93-4428-A404-8F1F13AD5D61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E25A829-BABC-41EE-80C2-56FACE3AA49B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E25A829-BABC-41EE-80C2-56FACE3AA49B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E25A829-BABC-41EE-80C2-56FACE3AA49B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E25A829-BABC-41EE-80C2-56FACE3AA49B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83CA0C3E-7B9E-4CFA-A0A6-1258940964CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83CA0C3E-7B9E-4CFA-A0A6-1258940964CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83CA0C3E-7B9E-4CFA-A0A6-1258940964CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83CA0C3E-7B9E-4CFA-A0A6-1258940964CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{116A502B-8196-4005-A067-2F8CA7ABC247}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{116A502B-8196-4005-A067-2F8CA7ABC247}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{116A502B-8196-4005-A067-2F8CA7ABC247}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{116A502B-8196-4005-A067-2F8CA7ABC247}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -68,9 +87,12 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{27473555-A6FE-4489-A727-57B3B19D1D96} = {6462A7D2-5018-443D-BF20-B7E407E3FEA6}
 		{E6CA8E9A-FC6F-4CA5-AE5A-56BEEB6FEA60} = {6462A7D2-5018-443D-BF20-B7E407E3FEA6}
-		{B5442738-A8FB-4923-9EC5-3B6512DCF30C} = {035D46E2-9278-4260-903B-66055D6CA268}
 		{BB3C0698-1736-491C-B621-A78D00CBF0CA} = {AE540C4C-DE07-49DB-81BD-B77C1F9EB8BF}
 		{E78E32F6-B94F-4ED3-9A33-3CE500C61AE6} = {AE540C4C-DE07-49DB-81BD-B77C1F9EB8BF}
+		{1F0D1711-6A93-4428-A404-8F1F13AD5D61} = {6462A7D2-5018-443D-BF20-B7E407E3FEA6}
+		{6E25A829-BABC-41EE-80C2-56FACE3AA49B} = {035D46E2-9278-4260-903B-66055D6CA268}
+		{83CA0C3E-7B9E-4CFA-A0A6-1258940964CB} = {035D46E2-9278-4260-903B-66055D6CA268}
+		{116A502B-8196-4005-A067-2F8CA7ABC247} = {035D46E2-9278-4260-903B-66055D6CA268}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {80233162-A195-4B57-8FF8-44ACED97629D}

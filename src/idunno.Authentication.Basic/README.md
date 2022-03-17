@@ -1,6 +1,6 @@
 ﻿# idunno.Authentication.Basic
 
-This project contains an implementation of [Basic Authentication](https://tools.ietf.org/html/rfc1945#section-11) for ASP.NET Core. 
+This project contains an implementation of [Basic Authentication](https://tools.ietf.org/html/rfc1945#section-11) for ASP.NET. 
 
 It started as a demonstration of how to write authentication middleware and **not** as something you would seriously consider using, but enough of
 you want to go with the world's worse authentication standard, so here we are. *You* are responsible for hardening it.

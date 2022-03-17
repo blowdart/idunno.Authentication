@@ -20,9 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Xunit;
 
-using idunno.Authentication.Basic;
-
-namespace idunno.Authentication.Test
+namespace idunno.Authentication.Basic.Test
 {
     [ExcludeFromCodeCoverage]
     public class BasicAuthenticationHandlerTests

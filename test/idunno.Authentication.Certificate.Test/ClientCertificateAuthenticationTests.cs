@@ -20,9 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Xunit;
 
-using idunno.Authentication.Certificate;
-
-namespace idunno.Authentication.Test
+namespace idunno.Authentication.Certificate.Test
 {
     [ExcludeFromCodeCoverage]
     public class ClientCertificateAuthenticationTests
@@ -485,7 +483,6 @@ namespace idunno.Authentication.Test
         private static TestServer CreateServer(
             CertificateAuthenticationOptions configureOptions,
             X509Certificate2 clientCertificate = null,
-            Func<HttpContext, bool> handler = null,
             Uri baseAddress = null,
             bool wireUpHeaderMiddleware = false,
             string headerName = "")
@@ -571,7 +568,7 @@ namespace idunno.Authentication.Test
             return server;
         }
 
-        private CertificateAuthenticationEvents sucessfulValidationEvents = new CertificateAuthenticationEvents()
+        private readonly CertificateAuthenticationEvents sucessfulValidationEvents = new CertificateAuthenticationEvents()
         {
             OnValidateCertificate = context =>
             {
@@ -587,7 +584,7 @@ namespace idunno.Authentication.Test
             }
         };
 
-        private CertificateAuthenticationEvents failedValidationEvents = new CertificateAuthenticationEvents()
+        private readonly CertificateAuthenticationEvents failedValidationEvents = new CertificateAuthenticationEvents()
         {
             OnValidateCertificate = context =>
             {
@@ -596,7 +593,7 @@ namespace idunno.Authentication.Test
             }
         };
 
-        private CertificateAuthenticationEvents unprocessedValidationEvents = new CertificateAuthenticationEvents()
+        private readonly CertificateAuthenticationEvents unprocessedValidationEvents = new CertificateAuthenticationEvents()
         {
             OnValidateCertificate = context =>
             {
