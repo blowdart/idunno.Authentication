@@ -23,11 +23,11 @@ This is **not** an official Microsoft project, this is an "In my spare time, ent
 
 nuget packages are available.
 
-| Authentication Type | Package Name                       | nuget link                                                         | latest |
-|---------------------|------------------------------------|--------------------------------------------------------------------|--------|
-| Basic               | idunno.Authentication.Basic        | https://www.nuget.org/packages/idunno.Authentication.Basic/        | ![Latest Basic Authentication Package](https://img.shields.io/nuget/v/idunno.Authentication.Basic) |
-| SharedKey           | idunno.Authentication.SharedKey    | https://www.nuget.org/packages/idunno.Authentication.SharedKey/    | ![Latest SharedKey Authentication Package](https://img.shields.io/nuget/v/idunno.Authentication.SharedKey) |
-| Certificate         | idunno.Authentication.Certificate  | https://www.nuget.org/packages/idunno.Authentication.Certificate/  | ![Latest Certificate Package](https://img.shields.io/nuget/v/idunno.Authentication.Certificate) |
+| Authentication Type | nuget package                                                      |
+|---------------------|--------------------------------------------------------------------|
+| Basic               | https://www.nuget.org/packages/idunno.Authentication.Basic/        |
+| SharedKey           | https://www.nuget.org/packages/idunno.Authentication.SharedKey/    |
+| Certificate         | https://www.nuget.org/packages/idunno.Authentication.Certificate/  |
 
 ## Version History
 
