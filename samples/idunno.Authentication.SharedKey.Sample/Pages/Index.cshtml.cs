@@ -20,17 +20,14 @@ namespace idunno.Authentication.SharedSecret.Sample.Pages
         [BindProperty]
         [Display(Name = "Message:")]
         public string? Message { get; set; }
-        
+
         public List<SelectListItem> KnownKeyIdentifiers = KeyResolver.Keys.Select(k => new SelectListItem { Value = k.Key + ":" + Convert.ToHexString(k.Value), Text = k.Key }).ToList();
 
         public HttpStatusCode? ResponseCode;
         public string? ResponseBody;
 
-        private readonly ILogger<IndexModel> _logger;
-
-        public IndexModel(ILogger<IndexModel> logger)
+        public IndexModel()
         {
-            _logger = logger;
         }
 
         public void OnGet()

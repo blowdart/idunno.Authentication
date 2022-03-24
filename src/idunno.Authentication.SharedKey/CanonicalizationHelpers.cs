@@ -104,7 +104,7 @@ namespace idunno.Authentication.SharedKey
             else
             {
                 canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.ContentEncoding].ToString());
-                canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.AcceptLanguage].ToString());
+                canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.ContentLanguage].ToString());
                 canonicalizedHeaderBuilder.Append(request.ContentLength == null ? "0" : ((long)request.ContentLength).ToString(CultureInfo.InvariantCulture));
                 canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.ContentMD5].ToString());
                 canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.ContentType].ToString());

@@ -45,8 +45,8 @@ If you are making calls from an ASP.NET application you can configure the [HttpC
 
 ### Configuring the server
 
-For .NET 6 add a call to `build.Services.AddAuthentication()` and then add the `SharedKey` handler, specifying a [key lookup function](#keyResolution) in options, 
-and an [identity building function](#identityBuilding) in the OnValidateSharedKey event, before any call to `Services.AddRazorPages()`:
+For .NET 6 minimal APIs add a call to `build.Services.AddAuthentication()` in `program.cs` and then add the `SharedKey` handler, specifying a [key lookup function](#keyResolution) in options, 
+and an [identity building function](#identityBuilding) in the OnValidateSharedKey event, before any call to `Services.AddRazorPages()`. For .NET 5 add the code in `ConfigureServices()` in `startup.cs`:
 
 ```c#
 builder.Services.AddAuthentication(SharedKeyAuthenticationDefaults.AuthenticationScheme)
@@ -60,7 +60,7 @@ builder.Services.AddAuthentication(SharedKeyAuthenticationDefaults.Authenticatio
     });
 ```
 
-then after `app.UseRouting()` but before `app.MapRazorPages()` ensure there is a call to `app.UseAuthentication()` before a call to `app.UseAuthorization()`.
+Ensure there is a call to `app.UseAuthentication()` before a call to `app.UseAuthorization()`. This is in the `Configure()` method in `startup.cs` for .NET 5.
 
 ```c#
 app.UseRouting();

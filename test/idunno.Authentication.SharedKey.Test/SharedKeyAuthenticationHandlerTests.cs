@@ -664,8 +664,379 @@ namespace idunno.Authentication.SharedKey.Test
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
-        // TODO : Invalid base64 md5 checks
+
+        [Fact]
+        public async Task AuthorizedRequestWithContentAndNoMd5ReturnsUnauthorized()
+        {
+            const string knownKeyId = "keyid";
+            byte[] knownKey = new byte[64];
+            using var randomNumberGenerator = RandomNumberGenerator.Create();
+            randomNumberGenerator.GetBytes(knownKey);
+
+            using var host = await CreateHost(o => {
+                o.KeyResolver = (keyID) =>
+                {
+                    if (keyID == knownKeyId)
+                    {
+                        return knownKey;
+                    }
+                    else
+                    {
+                        return Array.Empty<byte>();
+                    }
+                };
+                o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
+                o.Events = new SharedKeyAuthenticationEvents
+                {
+                    OnValidateSharedKey = (context) =>
+                    {
+                        var claims = new[]
+                        {
+                            new Claim(
+                            "keyId",
+                            context.KeyId,
+                            ClaimValueTypes.String,
+                            context.Options.ClaimsIssuer)
+                        };
+
+                        context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, context.Scheme.Name));
+                        context.Success();
+
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            using var server = host.GetTestServer();
+
+            var mutatingHttpMessageHandler = new RequestMutatingHandler((request) =>
+            {
+                request.Content.Headers.Remove(HeaderNames.ContentMD5);
+            })
+            {
+                InnerHandler = server.CreateHandler()
+            };
+
+            var sharedKeyHttpMessageHandler = new SharedKeyHttpMessageHandler(knownKeyId, knownKey)
+            {
+                InnerHandler = mutatingHttpMessageHandler
+            };
+
+            using var httpClient = new HttpClient(sharedKeyHttpMessageHandler)
+            {
+                BaseAddress = server.BaseAddress
+            };
+
+            HttpResponseMessage response;
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://localhost");
+            {
+                httpRequestMessage.Content = new StringContent("body");
+                response = await httpClient.SendAsync(httpRequestMessage);
+            };
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task AuthorizedRequestWithContentAndMismatchedMd5ReturnsUnauthorized()
+        {
+            const string knownKeyId = "keyid";
+            byte[] knownKey = new byte[64];
+            using var randomNumberGenerator = RandomNumberGenerator.Create();
+            randomNumberGenerator.GetBytes(knownKey);
+
+            using var host = await CreateHost(o => {
+                o.KeyResolver = (keyID) =>
+                {
+                    if (keyID == knownKeyId)
+                    {
+                        return knownKey;
+                    }
+                    else
+                    {
+                        return Array.Empty<byte>();
+                    }
+                };
+                o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
+                o.Events = new SharedKeyAuthenticationEvents
+                {
+                    OnValidateSharedKey = (context) =>
+                    {
+                        var claims = new[]
+                        {
+                            new Claim(
+                            "keyId",
+                            context.KeyId,
+                            ClaimValueTypes.String,
+                            context.Options.ClaimsIssuer)
+                        };
+
+                        context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, context.Scheme.Name));
+                        context.Success();
+
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            using var server = host.GetTestServer();
+
+            var mutatingHttpMessageHandler = new RequestMutatingHandler(async (request) =>
+            {
+                await request.Content.ReadAsStringAsync();
+                request.Content = new StringContent("ChangedContent");
+            })
+            {
+                InnerHandler = server.CreateHandler()
+            };
+
+            var sharedKeyHttpMessageHandler = new SharedKeyHttpMessageHandler(knownKeyId, knownKey)
+            {
+                InnerHandler = mutatingHttpMessageHandler
+            };
+
+            using var httpClient = new HttpClient(sharedKeyHttpMessageHandler)
+            {
+                BaseAddress = server.BaseAddress
+            };
+
+            HttpResponseMessage response;
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://localhost");
+            {
+                httpRequestMessage.Content = new StringContent("body");
+                response = await httpClient.SendAsync(httpRequestMessage);
+            };
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task AuthorizedRequestWithContentAndInvalidBase64Md5ReturnsUnauthorized()
+        {
+            const string knownKeyId = "keyid";
+            byte[] knownKey = new byte[64];
+            using var randomNumberGenerator = RandomNumberGenerator.Create();
+            randomNumberGenerator.GetBytes(knownKey);
+
+            using var host = await CreateHost(o => {
+                o.KeyResolver = (keyID) =>
+                {
+                    if (keyID == knownKeyId)
+                    {
+                        return knownKey;
+                    }
+                    else
+                    {
+                        return Array.Empty<byte>();
+                    }
+                };
+                o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
+                o.Events = new SharedKeyAuthenticationEvents
+                {
+                    OnValidateSharedKey = (context) =>
+                    {
+                        var claims = new[]
+                        {
+                            new Claim(
+                            "keyId",
+                            context.KeyId,
+                            ClaimValueTypes.String,
+                            context.Options.ClaimsIssuer)
+                        };
+
+                        context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, context.Scheme.Name));
+                        context.Success();
+
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            using var server = host.GetTestServer();
+
+            var mutatingHttpMessageHandler = new RequestMutatingHandler((request) =>
+            {
+                request.Content.Headers.Remove(HeaderNames.ContentMD5);
+                request.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentMD5, "NotBase64");
+            })
+            {
+                InnerHandler = server.CreateHandler()
+            };
+
+            var sharedKeyHttpMessageHandler = new SharedKeyHttpMessageHandler(knownKeyId, knownKey)
+            {
+                InnerHandler = mutatingHttpMessageHandler
+            };
+
+            using var httpClient = new HttpClient(sharedKeyHttpMessageHandler)
+            {
+                BaseAddress = server.BaseAddress
+            };
+
+            HttpResponseMessage response;
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://localhost");
+            {
+                httpRequestMessage.Content = new StringContent("body");
+                response = await httpClient.SendAsync(httpRequestMessage);
+            };
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
         // TODO : Failure on included header changes
+        [Theory]
+        [InlineData("If-Modified-Since", "Wed, 21 Oct 2015 07:28:00 GMT")]
+        [InlineData("If-Match", "\"etag\"")]
+        [InlineData("If-None-Match", "\"etag\"")]
+        [InlineData("If-Unmodified-Since", "Wed, 21 Oct 2015 07:28:00 GMT")]
+        [InlineData("Range", "1-")]
+        public async Task MutatingARequestThatAffectsACanonicalizedRequestHeaderReturnsUnauthorized(string headerName, string value)
+        {
+            const string knownKeyId = "keyid";
+            byte[] knownKey = new byte[64];
+            using var randomNumberGenerator = RandomNumberGenerator.Create();
+            randomNumberGenerator.GetBytes(knownKey);
+
+            using var host = await CreateHost(o => {
+                o.KeyResolver = (keyID) =>
+                {
+                    if (keyID == knownKeyId)
+                    {
+                        return knownKey;
+                    }
+                    else
+                    {
+                        return Array.Empty<byte>();
+                    }
+                };
+                o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
+                o.Events = new SharedKeyAuthenticationEvents
+                {
+                    OnValidateSharedKey = (context) =>
+                    {
+                        var claims = new[]
+                        {
+                            new Claim(
+                            "keyId",
+                            context.KeyId,
+                            ClaimValueTypes.String,
+                            context.Options.ClaimsIssuer)
+                        };
+
+                        context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, context.Scheme.Name));
+                        context.Success();
+
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            using var server = host.GetTestServer();
+
+            var mutatingHttpMessageHandler = new RequestMutatingHandler((request) =>
+            {
+                request.Headers.Remove(headerName);
+                request.Headers.TryAddWithoutValidation(headerName, value);
+            })
+            {
+                InnerHandler = server.CreateHandler()
+            };
+
+            var sharedKeyHttpMessageHandler = new SharedKeyHttpMessageHandler(knownKeyId, knownKey)
+            {
+                InnerHandler = mutatingHttpMessageHandler
+            };
+
+            using var httpClient = new HttpClient(sharedKeyHttpMessageHandler)
+            {
+                BaseAddress = server.BaseAddress
+            };
+
+            HttpResponseMessage response;
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://localhost");
+            {
+                httpRequestMessage.Content = new StringContent("body");
+                response = await httpClient.SendAsync(httpRequestMessage);
+            };
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+        [Theory]
+        [InlineData("Content-Encoding", "compress")]
+        [InlineData("Content-Language", "en-UK")]
+        [InlineData("Content-Type", "not/valid")]
+        public async Task MutatingARequestThatAffectsACanonicalizedContentHeaderReturnsUnauthorized(string headerName, string value)
+        {
+            const string knownKeyId = "keyid";
+            byte[] knownKey = new byte[64];
+            using var randomNumberGenerator = RandomNumberGenerator.Create();
+            randomNumberGenerator.GetBytes(knownKey);
+
+            using var host = await CreateHost(o => {
+                o.KeyResolver = (keyID) =>
+                {
+                    if (keyID == knownKeyId)
+                    {
+                        return knownKey;
+                    }
+                    else
+                    {
+                        return Array.Empty<byte>();
+                    }
+                };
+                o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
+                o.Events = new SharedKeyAuthenticationEvents
+                {
+                    OnValidateSharedKey = (context) =>
+                    {
+                        var claims = new[]
+                        {
+                            new Claim(
+                            "keyId",
+                            context.KeyId,
+                            ClaimValueTypes.String,
+                            context.Options.ClaimsIssuer)
+                        };
+
+                        context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, context.Scheme.Name));
+                        context.Success();
+
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            using var server = host.GetTestServer();
+
+            var mutatingHttpMessageHandler = new RequestMutatingHandler((request) =>
+            {
+                request.Content.Headers.Remove(headerName);
+                request.Content.Headers.TryAddWithoutValidation(headerName, value);
+            })
+            {
+                InnerHandler = server.CreateHandler()
+            };
+
+            var sharedKeyHttpMessageHandler = new SharedKeyHttpMessageHandler(knownKeyId, knownKey)
+            {
+                InnerHandler = mutatingHttpMessageHandler
+            };
+
+            using var httpClient = new HttpClient(sharedKeyHttpMessageHandler)
+            {
+                BaseAddress = server.BaseAddress
+            };
+
+            HttpResponseMessage response;
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://localhost");
+            {
+                httpRequestMessage.Content = new StringContent("body");
+                response = await httpClient.SendAsync(httpRequestMessage);
+            };
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
 
         private static async Task<IHost> CreateHost(
             Action<SharedKeyAuthenticationOptions> options,
