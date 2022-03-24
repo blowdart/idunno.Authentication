@@ -1,0 +1,72 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Shared Key Sample";
+}
+
+<h1 class="display-4">Shared Key Sample</h1>
+
+<form method="post">
+    <div class="mb-3">
+        <h2>Message Creation</h2>
+    </div>
+    <div class="mb-3">
+        <label asp-for="KeyIdentifier" class="form-label"></label>
+        <select asp-for="KeyIdentifier" asp-items="Model.KnownKeyIdentifiers" class="form-control" aria-describedby="KeyIdentifierHelp">
+        </select>
+        <div id="KeyIdentifierHelp" class="form-text">Select a known key identifier.</div>
+    </div>
+    <div class="mb-3">
+        <input type="text" class="form-control" id="KeyInHex" aria-describedby="KeyInHexHelp" disabled />
+        <div id="KeyInHexHelp" class="form-text">The shared key value.</div>
+    </div> 
+    <div class="mb-3">
+        <label asp-for="Message" class="form-label"></label>
+        <input asp-for="Message" asp-items="Model.Message" type="text" class="form-control" aria-describedby="MessageHelp" />
+        <div id="MessageHelp" class="form-text">Enter an optional message to send as the HTTP request content.</div>
+    </div> 
+    <div class="mb-3">
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </div>
+</form>
+
+@if (Model.ResponseCode != null)
+{
+    <div class="mb-3">
+        <h2>Server Response</h2>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm">
+                Status Code
+            </div>
+            <div class="col-sm">
+                @if (Model.ResponseCode != System.Net.HttpStatusCode.OK)
+                {
+                    <text>⚠ </text> 
+                }
+                @Model.ResponseCode
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                Response Body
+            </div>
+            <div class="col-sm">
+                @Model.ResponseBody
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.getElementById('KeyIdentifier').addEventListener('change', function() {
+            var key = document.getElementById('KeyIdentifier').value;
+            document.getElementById('KeyInHex').value = key.substring(key.indexOf(":")+1);
+        });
+
+        var defaultKey = document.getElementById('KeyIdentifier').value;
+        document.getElementById('KeyInHex').value = defaultKey.substring(defaultKey.indexOf(":")+1)
+    </script>
+}

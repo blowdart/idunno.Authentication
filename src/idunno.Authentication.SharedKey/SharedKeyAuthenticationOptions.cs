@@ -22,6 +22,6 @@ namespace idunno.Authentication.SharedKey
 
         public Func<string, byte[]> KeyResolver { get; set; } = (keyId) => Array.Empty<byte>();
 
-        public TimeSpan MaximumMessageAge { get; set; } = new TimeSpan(0, 15, 0);
+        public TimeSpan MaximumMessageValidity { get; set; } = new TimeSpan(0, 15, 0);
     }
 }

@@ -186,7 +186,7 @@ namespace idunno.Authentication.SharedKey.Test
             }
 
             Assert.Equal(1, requestLoggingHandler.Requests.Count);
-            Assert.Equal(keyID, requestLoggingHandler.Requests[0].Headers.Authorization.Parameter.Substring(0, keyID.Length));
+            Assert.Equal(keyID, requestLoggingHandler.Requests[0].Headers.Authorization.Parameter[..keyID.Length]);
         }
 
 
@@ -198,7 +198,12 @@ namespace idunno.Authentication.SharedKey.Test
                 HttpRequestMessage request, CancellationToken cancellationToken)
             {
                 requests.Add(request);
-                return base.SendAsync(request, cancellationToken);
+                // We don't have an inner handler as we're just testing the client, so send an OK response.
+                var response = new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK
+                };
+                return Task.FromResult(response);
             }
 
             public IReadOnlyList<HttpRequestMessage> Requests

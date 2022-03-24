@@ -2,22 +2,21 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Web;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Net.Http.Headers;
 
 namespace idunno.Authentication.SharedKey
 {
     internal static class CanonicalizationHelpers
     {
-        // TODO: Date Override Header
-
         public static string CanonicalizeHeaders(this HttpRequestMessage request)
         {
             if (request == null)
@@ -25,64 +24,64 @@ namespace idunno.Authentication.SharedKey
                 throw new ArgumentNullException(nameof(request));
             }
 
-            var headerPortion = new CanonicalizedStringBuilder();
-            headerPortion.Append(request.Method.ToString().ToUpperInvariant());
-            if (request.Content.Headers == null)
+            var canonicalizedHeaderBuilder = new CanonicalizedStringBuilder();
+            canonicalizedHeaderBuilder.Append(request.Method.ToString().ToUpperInvariant());
+            if (request.Content == null || request.Content.Headers == null)
             {
-                headerPortion.Append(string.Empty); // Encoding
-                headerPortion.Append(string.Empty); // Language
-                headerPortion.Append(0);            // Length
-                headerPortion.Append(string.Empty); // MD5
-                headerPortion.Append(string.Empty); // Content-Type
+                canonicalizedHeaderBuilder.Append(string.Empty); // Encoding
+                canonicalizedHeaderBuilder.Append(string.Empty); // Language
+                canonicalizedHeaderBuilder.Append(0);            // Length
+                canonicalizedHeaderBuilder.Append(string.Empty); // MD5
+                canonicalizedHeaderBuilder.Append(string.Empty); // Content-Type
             }
             else
             {
-                headerPortion.Append(request.Content.Headers.ContentEncoding);
-                headerPortion.Append(request.Content.Headers.ContentLanguage);
-                headerPortion.Append(request.Content.Headers == null ? "0" : ((long)request.Content.Headers.ContentLength).ToString(CultureInfo.InvariantCulture)) ;
-                headerPortion.Append(request.Content.Headers.ContentMD5 == null ? string.Empty : Convert.ToBase64String(request.Content.Headers.ContentMD5));
-                headerPortion.Append(request.Content.Headers.ContentType);
+                canonicalizedHeaderBuilder.Append(request.Content.Headers.ContentEncoding);
+                canonicalizedHeaderBuilder.Append(request.Content.Headers.ContentLanguage);
+                canonicalizedHeaderBuilder.Append(request.Content.Headers == null ? "0" : ((long)request.Content.Headers.ContentLength).ToString(CultureInfo.InvariantCulture)) ;
+                canonicalizedHeaderBuilder.Append(request.Content.Headers.ContentMD5 == null ? string.Empty : Convert.ToBase64String(request.Content.Headers.ContentMD5));
+                canonicalizedHeaderBuilder.Append(request.Content.Headers.ContentType);
             }
-            headerPortion.Append(request.Headers.Date.HasValue ? request.Headers.Date.Value.ToString("R", CultureInfo.InvariantCulture) : null);
-            headerPortion.Append(request.Headers.IfModifiedSince);
-            headerPortion.Append(request.Headers.IfMatch);
-            headerPortion.Append(request.Headers.IfNoneMatch);
-            headerPortion.Append(request.Headers.IfUnmodifiedSince);
-            headerPortion.Append(request.Headers.Range);
-            return headerPortion.ToString();
+            canonicalizedHeaderBuilder.Append(request.Headers.Date.HasValue ? request.Headers.Date.Value.ToString("R", CultureInfo.InvariantCulture) : null);
+            canonicalizedHeaderBuilder.Append(request.Headers.IfModifiedSince);
+            canonicalizedHeaderBuilder.Append(request.Headers.IfMatch);
+            canonicalizedHeaderBuilder.Append(request.Headers.IfNoneMatch);
+            canonicalizedHeaderBuilder.Append(request.Headers.IfUnmodifiedSince);
+            canonicalizedHeaderBuilder.Append(request.Headers.Range);
+
+            return canonicalizedHeaderBuilder.ToString();
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "The azure specification normalizes on lower case.")]
-        public static string CanonicalizeResource(this HttpRequestMessage request)
+        public static string CanonicalizeResource(this HttpRequestMessage request, string keyId)
         {
             if (request == null)
             {
                 throw new ArgumentNullException(nameof(request));
             }
 
-            var canonicalizedResource = new StringBuilder();
+            var canonicalizedResourceBuilder = new StringBuilder();
 
-            canonicalizedResource.Append("/");
-            canonicalizedResource.Append(request.Headers.Host.ToLowerInvariant()); // We are using the host name rather than an account owner because that is too azure specific.
-            canonicalizedResource.Append(WebUtility.UrlEncode(request.RequestUri.AbsolutePath));
+            canonicalizedResourceBuilder.Append('/');
+            canonicalizedResourceBuilder.Append(keyId.ToLower(CultureInfo.InvariantCulture));
+            canonicalizedResourceBuilder.Append(request.RequestUri.AbsolutePath);
 
             if (request.RequestUri.Query.Length > 0 )
             {
                 // We have query parameters
                 NameValueCollection queryNameValueCollection = HttpUtility.ParseQueryString(request.RequestUri.Query);
+                var sortedQueryNameValueList = new SortedList<string, string>(queryNameValueCollection.AllKeys.ToDictionary(k => k ?? string.Empty, k => queryNameValueCollection[k]));
 
-                var orderedQueryStringParameters = from q in queryNameValueCollection.AllKeys.Distinct() orderby q select q;
-
-                foreach (string parameterName in queryNameValueCollection.Keys)
+                foreach (var keyValuePair in sortedQueryNameValueList)
                 {
-                    canonicalizedResource.Append("\n");
-                    canonicalizedResource.Append(parameterName);
-                    canonicalizedResource.Append(":");
-                    canonicalizedResource.Append(queryNameValueCollection[parameterName]);
+                    canonicalizedResourceBuilder.Append('\n');
+                    canonicalizedResourceBuilder.Append(keyValuePair.Key.ToLowerInvariant());
+                    canonicalizedResourceBuilder.Append(':');
+                    canonicalizedResourceBuilder.Append(keyValuePair.Value);
                 }
             }
 
-            return canonicalizedResource.ToString();
+            return canonicalizedResourceBuilder.ToString();
         }
 
         public static string CanonicalizeHeaders(this HttpRequest request)
@@ -92,67 +91,65 @@ namespace idunno.Authentication.SharedKey
                 throw new ArgumentNullException(nameof(request));
             }
 
-            var headerPortion = new CanonicalizedStringBuilder();
-            headerPortion.Append(request.Method.ToString().ToUpperInvariant());
+            var canonicalizedHeaderBuilder = new CanonicalizedStringBuilder();
+            canonicalizedHeaderBuilder.Append(request.Method.ToString().ToUpperInvariant());
             if (request.Headers == null)
             {
-                headerPortion.Append(string.Empty); // Encoding
-                headerPortion.Append(string.Empty); // Language
-                headerPortion.Append(0);            // Length
-                headerPortion.Append(string.Empty); // MD5
-                headerPortion.Append(string.Empty); // Content-Type
+                canonicalizedHeaderBuilder.Append(string.Empty); // Encoding
+                canonicalizedHeaderBuilder.Append(string.Empty); // Language
+                canonicalizedHeaderBuilder.Append(0);            // Length
+                canonicalizedHeaderBuilder.Append(string.Empty); // MD5
+                canonicalizedHeaderBuilder.Append(string.Empty); // Content-Type
             }
             else
             {
-                headerPortion.Append(request.GetTypedHeaders().AcceptEncoding);
-                headerPortion.Append(request.GetTypedHeaders().AcceptLanguage);
-                headerPortion.Append(request.ContentLength == null ? "0" : ((long)request.ContentLength).ToString(CultureInfo.InvariantCulture));
-
-                var md5 = request.Headers[HttpRequestHeader.ContentMd5.ToString()][0];
-                headerPortion.Append(md5 ?? string.Empty);
-
-                headerPortion.Append(request.GetTypedHeaders().ContentType);
+                canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.ContentEncoding].ToString());
+                canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.AcceptLanguage].ToString());
+                canonicalizedHeaderBuilder.Append(request.ContentLength == null ? "0" : ((long)request.ContentLength).ToString(CultureInfo.InvariantCulture));
+                canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.ContentMD5].ToString());
+                canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.ContentType].ToString());
             }
-            headerPortion.Append(request.GetTypedHeaders().Date.HasValue ? request.GetTypedHeaders().Date.Value.ToString("R", CultureInfo.InvariantCulture) : null);
-            headerPortion.Append(request.GetTypedHeaders().IfModifiedSince);
-            headerPortion.Append(request.GetTypedHeaders().IfMatch);
-            headerPortion.Append(request.GetTypedHeaders().IfNoneMatch);
-            headerPortion.Append(request.GetTypedHeaders().IfUnmodifiedSince);
-            headerPortion.Append(request.GetTypedHeaders().Range);
-            return headerPortion.ToString();
+
+            canonicalizedHeaderBuilder.Append(request.GetTypedHeaders().Date.HasValue ? request.GetTypedHeaders().Date.Value.ToString("R", CultureInfo.InvariantCulture) : null);
+            canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.IfModifiedSince].ToString());
+            canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.IfMatch].ToString());
+            canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.IfNoneMatch].ToString());
+            canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.IfUnmodifiedSince].ToString());
+            canonicalizedHeaderBuilder.Append(request.Headers[HeaderNames.Range].ToString());
+
+            return canonicalizedHeaderBuilder.ToString();
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "The azure specification normalizes on lower case.")]
-        public static string CanonicalizeResource(this HttpRequest request)
+        public static string CanonicalizeResource(this HttpRequest request, string keyId)
         {
             if (request == null)
             {
                 throw new ArgumentNullException(nameof(request));
             }
 
-            var canonicalizedResource = new StringBuilder();
+            var canonicalizedResourceBuilder = new StringBuilder();
 
-            canonicalizedResource.Append("/");
-            canonicalizedResource.Append(request.Host.ToString().ToLowerInvariant()); // We are using the host name rather than an account owner because that is too azure specific.
-            canonicalizedResource.Append(WebUtility.UrlEncode(request.Path));
+            canonicalizedResourceBuilder.Append('/');
+            canonicalizedResourceBuilder.Append(keyId.ToLower(CultureInfo.InvariantCulture));
+            canonicalizedResourceBuilder.Append(request.Path);
 
             if (request.Query.Any())
             {
                 // We have query parameters
                 NameValueCollection queryNameValueCollection = HttpUtility.ParseQueryString(request.QueryString.Value);
+                var sortedQueryNameValueList = new SortedList<string, string>(queryNameValueCollection.AllKeys.ToDictionary(k => k ?? string.Empty, k => queryNameValueCollection[k]));
 
-                var orderedQueryStringParameters = from q in queryNameValueCollection.AllKeys.Distinct() orderby q select q;
-
-                foreach (string parameterName in orderedQueryStringParameters)
+                foreach (var keyValuePair in sortedQueryNameValueList)
                 {
-                    canonicalizedResource.Append("\n");
-                    canonicalizedResource.Append(parameterName);
-                    canonicalizedResource.Append(":");
-                    canonicalizedResource.Append(queryNameValueCollection[parameterName]);
+                    canonicalizedResourceBuilder.Append('\n');
+                    canonicalizedResourceBuilder.Append(keyValuePair.Key.ToLowerInvariant());
+                    canonicalizedResourceBuilder.Append(':');
+                    canonicalizedResourceBuilder.Append(keyValuePair.Value);
                 }
             }
 
-            return canonicalizedResource.ToString();
+            return canonicalizedResourceBuilder.ToString();
         }
     }
 }

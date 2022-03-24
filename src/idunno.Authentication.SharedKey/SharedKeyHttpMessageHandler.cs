@@ -22,7 +22,7 @@ namespace idunno.Authentication.SharedKey
         {
         }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             if (request == null)
             {
@@ -50,12 +50,12 @@ namespace idunno.Authentication.SharedKey
                 }
             }
 
-            byte[] hash = SharedKeySignature.Calculate(request, Key);
+            byte[] hash = SharedKeySignature.Calculate(request, KeyId, Key);
             request.Headers.Authorization = new AuthenticationHeaderValue(
                 SharedKeyAuthentication.AuthorizationScheme,
                 string.Format(CultureInfo.InvariantCulture, "{0}:{1}", KeyId, Convert.ToBase64String(hash)));
 
-            return base.SendAsync(request, cancellationToken);
+            return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
 
         private string KeyId { get; set; }

@@ -15,11 +15,12 @@ namespace idunno.Authentication.SharedKey
         /// Calculates a SHA256 HMAC for the <seealso cref="request"/>.
         /// </summary>
         /// <param name="request">The request to calculate a hash for.</param>
+        /// <param name="keyId">The key identifier used to sign the request.</param>
         /// <param name="key">The shared key used to sign the request.</param>
         /// <returns>A SHA256 HMAC of the canonicalized request.</returns>
-        internal static byte[] Calculate(HttpRequestMessage request, byte[] key)
+        internal static byte[] Calculate(HttpRequestMessage request, string keyId, byte[] key)
         {
-            var canonicalizedRequest = request.CanonicalizeHeaders() + request.CanonicalizeResource();
+            var canonicalizedRequest = request.CanonicalizeHeaders() + request.CanonicalizeResource(keyId);
             return CalculateHmac256(key, canonicalizedRequest);
         }
 
@@ -27,11 +28,12 @@ namespace idunno.Authentication.SharedKey
         /// Calculates a SHA256 HMAC for the <seealso cref="request"/>.
         /// </summary>
         /// <param name="request">The request to calculate a hash for.</param>
+        /// <param name="keyId">The key identifier used to sign the request.</param>
         /// <param name="key">The shared key used to sign the request.</param>
         /// <returns>A SHA256 HMAC of the canonicalized request.</returns>
-        internal static byte[] Calculate(HttpRequest request, byte[] key)
+        internal static byte[] Calculate(HttpRequest request, string keyId, byte[] key)
         {
-            var canonicalizedRequest = request.CanonicalizeHeaders() + request.CanonicalizeResource();
+            var canonicalizedRequest = request.CanonicalizeHeaders() + request.CanonicalizeResource(keyId);
             return CalculateHmac256(key, canonicalizedRequest);
         }
 

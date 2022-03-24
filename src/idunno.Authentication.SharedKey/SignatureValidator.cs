@@ -27,10 +27,8 @@ namespace idunno.Authentication.SharedKey
                     return null;
                 }
 
-                using (var md5 = MD5.Create())
-                {
-                    return md5.ComputeHash(bodyStream);
-                }
+                using var md5 = MD5.Create();
+                return md5.ComputeHash(bodyStream);
             }
         }
     }
