@@ -50,7 +50,7 @@ namespace idunno.Authentication.SharedKey
                 }
             }
 
-            byte[] hash = SharedKeySignature.Calculate(request, KeyId, Key);
+            byte[] hash = SharedKeySignature.Calculate(request, Key);
             request.Headers.Authorization = new AuthenticationHeaderValue(
                 SharedKeyAuthentication.AuthorizationScheme,
                 string.Format(CultureInfo.InvariantCulture, "{0}:{1}", KeyId, Convert.ToBase64String(hash)));

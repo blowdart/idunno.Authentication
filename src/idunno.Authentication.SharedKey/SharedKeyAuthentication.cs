@@ -32,8 +32,8 @@ namespace idunno.Authentication.SharedKey
                 var colonPosition = authenticationHeaderValue.IndexOf(":", StringComparison.OrdinalIgnoreCase);
                 if (colonPosition != 0 && colonPosition != authenticationHeaderValue.Length)
                 {
-                    keyId = authenticationHeaderValue.Substring(0, colonPosition);
-                    hmac = authenticationHeaderValue.Substring(colonPosition + 1);
+                    keyId = authenticationHeaderValue[..colonPosition];
+                    hmac = authenticationHeaderValue[(colonPosition + 1)..];
                     return true;
                 }
             }

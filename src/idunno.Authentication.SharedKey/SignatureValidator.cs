@@ -18,18 +18,16 @@ namespace idunno.Authentication.SharedKey
         public static async Task<byte[]> CalculateBodyMd5(HttpRequestMessage request)
         {
             await request.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-            using (var bodyStream = new MemoryStream())
+            using var bodyStream = new MemoryStream();
+            await request.Content.CopyToAsync(bodyStream).ConfigureAwait(false);
+            bodyStream.Position = 0;
+            if (bodyStream.Length <= 0)
             {
-                await request.Content.CopyToAsync(bodyStream).ConfigureAwait(false);
-                bodyStream.Position = 0;
-                if (bodyStream.Length <= 0)
-                {
-                    return null;
-                }
-
-                using var md5 = MD5.Create();
-                return md5.ComputeHash(bodyStream);
+                return null;
             }
+
+            using var md5 = MD5.Create();
+            return md5.ComputeHash(bodyStream);
         }
     }
 }

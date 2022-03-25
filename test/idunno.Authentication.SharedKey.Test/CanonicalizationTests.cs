@@ -41,7 +41,7 @@ namespace idunno.Authentication.SharedKey.Test
             var serverSignatures= new List<byte[]>();
             var clientSignatures = new List<byte[]>();
 
-            using var host = await CreateHost(serverSignatures, keyId, key);
+            using var host = await CreateHost(serverSignatures, key);
             using var server = host.GetTestServer();
 
             var requestLoggingHandler = new RequestLoggingHandler(clientSignatures)
@@ -56,9 +56,9 @@ namespace idunno.Authentication.SharedKey.Test
 
             using var httpClient = new HttpClient(clientSigningPipeline);
             HttpResponseMessage httpResponseMessage;
-            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://localhost/path/resource?a=1&a=2&b=1&A=3&c");
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://localhost/path/path with space/resource?a=1&a=2&b=1&A=3&c");
             {
-                httpRequestMessage.Content = new StringContent("body");
+                httpRequestMessage.Content = new StringContent("content");
                 httpResponseMessage = await httpClient.SendAsync(httpRequestMessage);
             };
 
@@ -95,7 +95,6 @@ namespace idunno.Authentication.SharedKey.Test
 
         private static async Task<IHost> CreateHost(
             IList<byte[]> requestSignatures,
-            string keyId,
             byte[] key,
             Uri baseAddress = null)
         {
@@ -106,7 +105,7 @@ namespace idunno.Authentication.SharedKey.Test
                         {
                             app.Run(async (context) =>
                             {
-                                requestSignatures.Add(SharedKeySignature.Calculate(context.Request, keyId, key));
+                                requestSignatures.Add(SharedKeySignature.Calculate(context.Request, key));
                                 var response = context.Response;
                                 response.StatusCode = (int)HttpStatusCode.OK;
                                 response.ContentType = "text/plain";

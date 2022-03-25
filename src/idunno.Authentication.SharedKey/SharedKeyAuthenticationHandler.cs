@@ -172,7 +172,7 @@ namespace idunno.Authentication.SharedKey
                     }
                 }
 
-                byte[] calculatedSignature = SharedKeySignature.Calculate(Request, keyId, key);
+                byte[] calculatedSignature = SharedKeySignature.Calculate(Request, key);
                 if (!CryptographicOperations.FixedTimeEquals(calculatedSignature, providedSignature))
                 {
                     const string invalidSignature = "Invalid Signature.";

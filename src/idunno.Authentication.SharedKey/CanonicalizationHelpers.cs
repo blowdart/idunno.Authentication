@@ -53,7 +53,7 @@ namespace idunno.Authentication.SharedKey
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "The azure specification normalizes on lower case.")]
-        public static string CanonicalizeResource(this HttpRequestMessage request, string keyId)
+        public static string CanonicalizeResource(this HttpRequestMessage request)
         {
             if (request == null)
             {
@@ -62,8 +62,6 @@ namespace idunno.Authentication.SharedKey
 
             var canonicalizedResourceBuilder = new StringBuilder();
 
-            canonicalizedResourceBuilder.Append('/');
-            canonicalizedResourceBuilder.Append(keyId.ToLower(CultureInfo.InvariantCulture));
             canonicalizedResourceBuilder.Append(request.RequestUri.AbsolutePath);
 
             if (request.RequestUri.Query.Length > 0 )
@@ -121,7 +119,7 @@ namespace idunno.Authentication.SharedKey
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "The azure specification normalizes on lower case.")]
-        public static string CanonicalizeResource(this HttpRequest request, string keyId)
+        public static string CanonicalizeResource(this HttpRequest request)
         {
             if (request == null)
             {
@@ -130,8 +128,6 @@ namespace idunno.Authentication.SharedKey
 
             var canonicalizedResourceBuilder = new StringBuilder();
 
-            canonicalizedResourceBuilder.Append('/');
-            canonicalizedResourceBuilder.Append(keyId.ToLower(CultureInfo.InvariantCulture));
             canonicalizedResourceBuilder.Append(request.Path);
 
             if (request.Query.Any())

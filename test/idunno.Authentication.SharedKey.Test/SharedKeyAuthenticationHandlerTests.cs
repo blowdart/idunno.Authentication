@@ -11,6 +11,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -19,6 +20,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
+
 using Xunit;
 
 namespace idunno.Authentication.SharedKey.Test
@@ -304,7 +306,7 @@ namespace idunno.Authentication.SharedKey.Test
         }
 
         [Fact]
-        public async Task AuthorizedRequestWithKnownKeyIdAndMatchingKeyAndChangedBodyReturnsForbidden()
+        public async Task AuthorizedRequestWithKnownKeyIdAndMatchingKeyAndChangedBodyReturnsUnauthorized()
         {
             const string knownKeyId = "keyid";
             byte[] knownKey = new byte[64];
@@ -376,7 +378,7 @@ namespace idunno.Authentication.SharedKey.Test
         }
 
         [Fact]
-        public async Task AuthorizedRequestWithNullDateHeaderReturnsForbidden()
+        public async Task AuthorizedRequestWithNullDateHeaderReturnsUnauthorized()
         {
             const string knownKeyId = "keyid";
             byte[] knownKey = new byte[64];
@@ -447,7 +449,7 @@ namespace idunno.Authentication.SharedKey.Test
         }
 
         [Fact]
-        public async Task AuthorizedRequestWithInvalidDateHeaderReturnsForbidden()
+        public async Task AuthorizedRequestWithInvalidDateHeaderReturnsUnauthorized()
         {
             const string knownKeyId = "keyid";
             byte[] knownKey = new byte[64];
@@ -519,7 +521,7 @@ namespace idunno.Authentication.SharedKey.Test
         }
 
         [Fact]
-        public async Task AuthorizedRequestWhichIsTooOldReturnsForbidden()
+        public async Task AuthorizedRequestWhichIsTooOldReturnsUnauthorized()
         {
             const string knownKeyId = "keyid";
             byte[] knownKey = new byte[64];
@@ -592,7 +594,7 @@ namespace idunno.Authentication.SharedKey.Test
         }
 
         [Fact]
-        public async Task AuthorizedRequestWhichIsTooFarInTheFutureReturnsForbidden()
+        public async Task AuthorizedRequestWhichIsTooFarInTheFutureReturnsUnauthorized()
         {
             const string knownKeyId = "keyid";
             byte[] knownKey = new byte[64];
@@ -883,7 +885,6 @@ namespace idunno.Authentication.SharedKey.Test
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
-        // TODO : Failure on included header changes
         [Theory]
         [InlineData("If-Modified-Since", "Wed, 21 Oct 2015 07:28:00 GMT")]
         [InlineData("If-Match", "\"etag\"")]
