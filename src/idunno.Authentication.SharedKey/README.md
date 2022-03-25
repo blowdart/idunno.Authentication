@@ -181,7 +181,7 @@ This representation is then appended with a canonicalized representation of the 
 The canonicalized resource is built by constructing a string as follows
 
 * Start a string with the resource's encoded URI path, beginning with the forward slash (/) character, without query parameters
-* Sort the query parameter names in alphabetical order, treating a query parameter that is not a key/value pair as having a null name and coming 
+* Sort the query parameter names in alphabetical order, treating a query parameter that is not a key/value pair as having a null parameter name and coming 
 first in any sorting
 * For each query parameter name
   * Append a newline (\n) character to the resource string
@@ -209,10 +209,10 @@ propertyStringToSign = VERB + "\n" +
                        CanonicalizedResource
 ```
 
-For example a request made to https://localhost/path/resource?a=1&a=2&b=1&A=3&c with a request content of `Content`, made on 1st January would product the following property string
+For example a request made to https://localhost/path/resource?a=1&a=2&b=1&A=3&c with a request content of `Content`, made on 1st January at midnight would product the following property string
 
 ```
-GET\n\n\n7\nmgNkuembtIDdJeHwKEyFVQ==\ntext/plain; charset=utf-8\nSat, 01 Jan 2022 22:06:24 GMT\n\n\n\n\n\n/path/resource\n:c\na:1,2,3\nb:1
+GET\n\n\n7\nmgNkuembtIDdJeHwKEyFVQ==\ntext/plain; charset=utf-8\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\n\n/path/resource\n:c\na:1,2,3\nb:1
 ```
 
 ### Signing and encoding the signature

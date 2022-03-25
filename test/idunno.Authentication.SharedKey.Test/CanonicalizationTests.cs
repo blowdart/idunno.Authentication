@@ -69,6 +69,37 @@ namespace idunno.Authentication.SharedKey.Test
             Assert.Equal(clientSignatures[0], serverSignatures[0]);
         }
 
+        [Theory]
+        [InlineData("api", "", "/api")]
+        [InlineData("api", "a=1", "/api\na:1")]
+        [InlineData("api", "a=1&b=2", "/api\na:1\nb:2")]
+        [InlineData("api", "a=1&b=2&a=3", "/api\na:1,3\nb:2")]
+        [InlineData("api", "a=1&b=2&a=3&c", "/api\n:c\na:1,3\nb:2")]
+        [InlineData("api", "c&a=1&b=2&a=3", "/api\n:c\na:1,3\nb:2")]
+        [InlineData("api", "c", "/api\n:c")]
+        [InlineData("api/", "a=1", "/api/\na:1")]
+        public void VerifyResourceCanonicialization(string path, string query, string expected)
+        {
+            var httpMethod = new HttpMethod("GET");
+            var requestUri = $"https://localhost/{path}?{query}";
+            var httpRequestMessage = new HttpRequestMessage(httpMethod, requestUri);
+            httpRequestMessage.Headers.Date = new DateTime(2022, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+            var httpRequest = new DefaultHttpContext().Request;
+            httpRequest.Headers.Add("Date", "Sat, 01 Jan 2022 00:00:00 GMT");
+            httpRequest.Method = "GET";
+            httpRequest.Protocol = "https";
+            httpRequest.Host = new HostString("localhost");
+            httpRequest.Path = $"/{path}";
+            httpRequest.QueryString = new QueryString('?' + query);
+
+            var canonicalizedHttpRequestMessageResource = CanonicalizationHelpers.CanonicalizeResource(httpRequestMessage);
+            var canonicalizedHttpRequestResource = CanonicalizationHelpers.CanonicalizeResource(httpRequest);
+
+            Assert.Equal(expected, canonicalizedHttpRequestResource);
+            Assert.Equal(expected, canonicalizedHttpRequestMessageResource);
+        }
+
         public class RequestLoggingHandler : DelegatingHandler
         {
             private readonly IList<byte[]> _requestSignatures;
