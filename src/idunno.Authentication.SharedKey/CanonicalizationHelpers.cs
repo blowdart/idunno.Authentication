@@ -38,15 +38,15 @@ namespace idunno.Authentication.SharedKey
             {
                 canonicalizedHeaderBuilder.Append(request.Content.Headers.ContentEncoding);
                 canonicalizedHeaderBuilder.Append(request.Content.Headers.ContentLanguage);
-                canonicalizedHeaderBuilder.Append(request.Content.Headers == null ? "0" : ((long)request.Content.Headers.ContentLength).ToString(CultureInfo.InvariantCulture)) ;
+                canonicalizedHeaderBuilder.Append(request.Content.Headers == null ? "0" : ((long)request.Content.Headers.ContentLength).ToString(CultureInfo.InvariantCulture));
                 canonicalizedHeaderBuilder.Append(request.Content.Headers.ContentMD5 == null ? string.Empty : Convert.ToBase64String(request.Content.Headers.ContentMD5));
                 canonicalizedHeaderBuilder.Append(request.Content.Headers.ContentType);
             }
             canonicalizedHeaderBuilder.Append(request.Headers.Date.HasValue ? request.Headers.Date.Value.ToString("R", CultureInfo.InvariantCulture) : null);
-            canonicalizedHeaderBuilder.Append(request.Headers.IfModifiedSince);
+            canonicalizedHeaderBuilder.Append(request.Headers.IfModifiedSince.HasValue ? request.Headers.IfModifiedSince.Value.ToString("R", CultureInfo.InvariantCulture) : null);
             canonicalizedHeaderBuilder.Append(request.Headers.IfMatch);
             canonicalizedHeaderBuilder.Append(request.Headers.IfNoneMatch);
-            canonicalizedHeaderBuilder.Append(request.Headers.IfUnmodifiedSince);
+            canonicalizedHeaderBuilder.Append(request.Headers.IfUnmodifiedSince.HasValue ? request.Headers.IfUnmodifiedSince.Value.ToString("R", CultureInfo.InvariantCulture) : null);
             canonicalizedHeaderBuilder.Append(request.Headers.Range);
 
             return canonicalizedHeaderBuilder.ToString();

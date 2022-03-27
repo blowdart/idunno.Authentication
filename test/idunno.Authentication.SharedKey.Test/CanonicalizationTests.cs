@@ -4,10 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,7 +19,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
+using Microsoft.Net.Http.Headers;
 using Xunit;
 
 namespace idunno.Authentication.SharedKey.Test
@@ -41,7 +43,7 @@ namespace idunno.Authentication.SharedKey.Test
             var serverSignatures= new List<byte[]>();
             var clientSignatures = new List<byte[]>();
 
-            using var host = await CreateHost(serverSignatures, key);
+            using var host = await CreateHost(serverSignatures, key, new Uri("https://localhost"));
             using var server = host.GetTestServer();
 
             var requestLoggingHandler = new RequestLoggingHandler(clientSignatures)
@@ -100,6 +102,148 @@ namespace idunno.Authentication.SharedKey.Test
             Assert.Equal(expected, canonicalizedHttpRequestMessageResource);
         }
 
+        // Notes - media-type always defaults to "text/plain; charset=utf-8" so it cannot be null.
+
+        const string TextContentType = "text/plain; charset=utf-8";
+
+        [Theory]
+        [InlineData("GET", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, -1, -1, "GET\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\n\n")]
+        [InlineData("PUT", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, -1, -1, "PUT\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\n\n")]
+        [InlineData("GET", "gzip", null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, -1, -1, "GET\ngzip\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\n\n")]
+        [InlineData("GET", null, "en-US", -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, -1, -1, "GET\n\nen-US\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\n\n")]
+        [InlineData("GET", null, null, 5, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, -1, -1, "GET\n\n\n5\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\n\n")]
+        [InlineData("GET", null, null, -1, "mgNkuembtIDdJeHwKEyFVQ==", null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, -1, -1, "GET\n\n\n0\nmgNkuembtIDdJeHwKEyFVQ==\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\n\n")]
+        [InlineData("GET", null, null, -1, null, TextContentType, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, -1, -1, "GET\n\n\n0\n\ntext/plain; charset=utf-8\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\n\n")]
+        [InlineData("GET", null, null, -1, null, null, "Sun, 02 Jan 2022 00:00:00 GMT", null, null, null, null, -1, -1, "GET\n\n\n0\n\n\nSun, 02 Jan 2022 00:00:00 GMT\n\n\n\n\n\n")]
+        [InlineData("GET", null, null, -1, null, null, "Sun, 02 Jan 2022 00:00:00 GMT", "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, -1, -1, "GET\n\n\n0\n\n\nSun, 02 Jan 2022 00:00:00 GMT\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\n")]
+        [InlineData("GET", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, "\"etag\"", null, null, -1, -1, "GET\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\"etag\"\n\n\n\n")]
+        [InlineData("GET", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, "\"etag\"", null, -1, -1, "GET\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\"etag\"\n\n\n")]
+        [InlineData("GET", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, "Sun, 02 Jan 2022 00:00:00 GMT", -1, -1, "GET\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\nSun, 02 Jan 2022 00:00:00 GMT\n\n")]
+        [InlineData("GET", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, 1, -1, "GET\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\nbytes=1-\n")]
+        [InlineData("GET", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, 1, 2, "GET\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\nbytes=1-2\n")]
+        public void VerifyRequestCanonicialization(
+            string method,
+            string contentEncoding,
+            string contentLanguage,
+            long contentLength,
+            string contentMd5,
+            string contentType,
+            string date,
+            string ifModifiedSince,
+            string ifMatch,
+            string ifNoneMatch,
+            string ifUnmodifiedSince,
+            long rangeLower,
+            long rangeUpper,
+            string expected)
+        {
+            const string requestUri = "https://localhost/api/fixed?a=b";
+
+            var httpRequestMessage = new HttpRequestMessage(new HttpMethod(method), requestUri);
+
+            httpRequestMessage.Headers.Date = DateTime.Parse(date, new CultureInfo("en-US") , DateTimeStyles.AdjustToUniversal);
+
+            if (contentType == null)
+            {
+                httpRequestMessage.Content = new ByteArrayContent(Array.Empty<byte>());
+            }
+            else if (contentType.Equals(TextContentType, StringComparison.OrdinalIgnoreCase))
+            {
+                httpRequestMessage.Content = new StringContent("", Encoding.UTF8, "text/plain");
+            }
+            else
+            {
+                throw new NotImplementedException("No code to parse that media type yet.");
+            }
+
+            var httpRequest = new DefaultHttpContext().Request;
+            httpRequest.Method = method;
+            httpRequest.Headers.Add(HeaderNames.Date, date);
+
+            if (!string.IsNullOrEmpty(contentEncoding))
+            {
+                httpRequestMessage.Content = new ByteArrayContent(Array.Empty<byte>());
+                httpRequestMessage.Content.Headers.ContentEncoding.Add(contentEncoding);
+                httpRequest.Headers.Add(HeaderNames.ContentEncoding, contentEncoding);
+            }
+
+            if (!string.IsNullOrEmpty(contentLanguage))
+            {
+                httpRequestMessage.Content.Headers.ContentLanguage.Add(contentLanguage);
+                httpRequest.Headers.Add(HeaderNames.ContentLanguage, contentLanguage);
+            }
+
+            if (contentLength != -1)
+            {
+                httpRequestMessage.Content.Headers.ContentLength = contentLength;
+                httpRequest.ContentLength = contentLength;
+            }
+
+            if (!string.IsNullOrEmpty(contentMd5))
+            {
+                httpRequestMessage.Content.Headers.ContentMD5 = Convert.FromBase64String(contentMd5);
+                httpRequest.Headers.Add(HeaderNames.ContentMD5, contentMd5);
+            }
+
+            if (!string.IsNullOrEmpty(contentType))
+            {
+                // httpRequestMessage type already set when creating the content property.
+                httpRequest.Headers.Add(HeaderNames.ContentType, contentType);
+            }
+
+            if (!string.IsNullOrEmpty(ifModifiedSince))
+            {
+                httpRequestMessage.Headers.TryAddWithoutValidation(HeaderNames.IfModifiedSince, ifModifiedSince);
+                httpRequest.Headers.Add(HeaderNames.IfModifiedSince, ifModifiedSince);
+            }
+
+            if (!string.IsNullOrEmpty(ifMatch))
+            {
+                httpRequestMessage.Headers.IfMatch.Add(new System.Net.Http.Headers.EntityTagHeaderValue(ifMatch));
+                httpRequest.Headers.Add(HeaderNames.IfMatch, ifMatch);
+            }
+
+            if (!string.IsNullOrEmpty(ifNoneMatch))
+            {
+                httpRequestMessage.Headers.IfNoneMatch.Add(new System.Net.Http.Headers.EntityTagHeaderValue(ifNoneMatch));
+                httpRequest.Headers.Add(HeaderNames.IfNoneMatch, ifNoneMatch);
+            }
+
+            if (!string.IsNullOrEmpty(ifUnmodifiedSince))
+            {
+                httpRequestMessage.Headers.IfUnmodifiedSince = DateTime.Parse(ifUnmodifiedSince, new CultureInfo("en-US"), DateTimeStyles.AdjustToUniversal);
+                httpRequest.Headers.Add(HeaderNames.IfUnmodifiedSince, ifUnmodifiedSince);
+            }
+
+            if (rangeLower != -1)
+            {
+                if (rangeUpper != -1)
+                {
+                    httpRequestMessage.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(rangeLower, rangeUpper);
+                }
+                else
+                {
+                    httpRequestMessage.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(rangeLower, null);
+                }
+
+                if (rangeUpper != -1)
+                {
+                    httpRequest.Headers.Add(HeaderNames.Range, $"bytes={rangeLower}-{rangeUpper}");
+                }
+                else
+                {
+                    httpRequest.Headers.Add(HeaderNames.Range, $"bytes={rangeLower}-");
+                }
+            }
+
+            var canonicalizedHttpRequestMessageHeaders = CanonicalizationHelpers.CanonicalizeHeaders(httpRequestMessage);
+            var canonicalizedHttpRequestHeaders = CanonicalizationHelpers.CanonicalizeHeaders(httpRequest);
+
+            Assert.Equal(expected, canonicalizedHttpRequestHeaders);
+            Assert.Equal(expected, canonicalizedHttpRequestMessageHeaders);
+        }
+
+
         public class RequestLoggingHandler : DelegatingHandler
         {
             private readonly IList<byte[]> _requestSignatures;
@@ -112,12 +256,20 @@ namespace idunno.Authentication.SharedKey.Test
             protected override Task<HttpResponseMessage> SendAsync(
                 HttpRequestMessage request, CancellationToken cancellationToken)
             {
+                if (request == null)
+                {
+                    throw new ArgumentNullException(nameof(request));
+                }
+
                 AuthenticationHeaderValue authenticationHeaderValue = request.Headers.Authorization;
 
                 if (authenticationHeaderValue != null)
                 {
-                    string encodedSignature = authenticationHeaderValue.Parameter[(authenticationHeaderValue.Parameter.IndexOf(':', StringComparison.OrdinalIgnoreCase) + 1)..];
-                    _requestSignatures.Add(Convert.FromBase64String(encodedSignature));
+                    if (authenticationHeaderValue.Parameter != null)
+                    {
+                        string encodedSignature = authenticationHeaderValue.Parameter[(authenticationHeaderValue.Parameter.IndexOf(':', StringComparison.OrdinalIgnoreCase) + 1)..];
+                        _requestSignatures.Add(Convert.FromBase64String(encodedSignature));
+                    }
                 }
 
                 return base.SendAsync(request, cancellationToken);
@@ -151,7 +303,6 @@ namespace idunno.Authentication.SharedKey.Test
             server.BaseAddress = baseAddress;
             return host;
         }
-
     }
 #endif
 }

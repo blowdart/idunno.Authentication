@@ -42,7 +42,7 @@ namespace idunno.Authentication.SharedSecret.Sample.Pages
                 requestDestination = string.Concat(requestDestination, "/", Uri.EscapeDataString(Message));
             }
 
-            var keyIdFromModel = KeyIdentifier[..(KeyIdentifier.IndexOf(':'))];
+            var keyIdFromModel = KeyIdentifier[..(KeyIdentifier.IndexOf(':', StringComparison.OrdinalIgnoreCase))];
 
             var httpHanderPipeline = new SharedKeyHttpMessageHandler(keyIdFromModel, KeyResolver.GetKey(keyIdFromModel))
             {

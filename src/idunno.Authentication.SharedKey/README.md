@@ -166,7 +166,7 @@ a string from the following parts of the request, in the order listed, with each
 * The HTTP verb for the request, in uppercase.
 * The Content-Encoding header value for the request if present, otherwise an empty string.
 * The Content-Language header value for the request if present, otherwise an empty string.
-* The Content-Length header value for the request if present, otherwise an empty string.
+* The Content-Length header value for the request if present, otherwise an 0 followed by a newline (\n).
 * The Content-MD5 header value for the request if present, which must be present if the request has content, otherwise an empty string.
 * The Content-Type header value for the request if present, otherwise an empty string.
 * The Date header value for the request if present, which much be present.
@@ -209,7 +209,7 @@ propertyStringToSign = VERB + "\n" +
                        CanonicalizedResource
 ```
 
-For example a request made to https://localhost/path/resource?a=1&a=2&b=1&A=3&c with a request content of `Content`, made on 1st January at midnight would product the following property string
+For example a GET request made to https://localhost/path/resource?a=1&a=2&b=1&A=3&c with a request content of `Content`, made on 1st January at midnight would product the following representation
 
 ```
 GET\n\n\n7\nmgNkuembtIDdJeHwKEyFVQ==\ntext/plain; charset=utf-8\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\n\n/path/resource\n:c\na:1,2,3\nb:1
