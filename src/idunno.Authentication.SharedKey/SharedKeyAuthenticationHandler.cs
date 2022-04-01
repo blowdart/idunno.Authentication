@@ -118,8 +118,8 @@ namespace idunno.Authentication.SharedKey
                 }
                 catch (Exception ex)
                 {
-                    const string failedToDecodeSignature = "Cannot build signature from decoded base64 value, exception {Message} encountered.";
-                    Logger.LogInformation(failedToDecodeSignature, ex.Message);
+                    const string failedToDecodeSignature = "Cannot build signature from decoded base64 value, exception {ex} encountered.";
+                    Logger.LogInformation(failedToDecodeSignature, ex);
                     return AuthenticateResult.Fail(ex);
                 }
 
@@ -158,7 +158,7 @@ namespace idunno.Authentication.SharedKey
                         }
                         catch (Exception ex)
                         {
-                            const string failedToDecodeSignature = "Cannot decode Content-MD5 header, exception {Message} encountered.";
+                            const string failedToDecodeSignature = "Cannot decode Content-MD5 header, exception {ex} encountered.";
                             Logger.LogInformation(failedToDecodeSignature, ex);
                             return AuthenticateResult.Fail(ex);
                         }

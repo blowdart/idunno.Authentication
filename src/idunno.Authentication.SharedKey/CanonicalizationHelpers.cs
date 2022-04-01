@@ -24,6 +24,11 @@ namespace idunno.Authentication.SharedKey
                 throw new ArgumentNullException(nameof(request));
             }
 
+            if (request.Headers == null)
+            {
+                throw new NullReferenceException("Request has not headers.");
+            }
+
             var canonicalizedHeaderBuilder = new CanonicalizedStringBuilder();
             canonicalizedHeaderBuilder.Append(request.Method.ToString().ToUpperInvariant());
             if (request.Content == null || request.Content.Headers == null)

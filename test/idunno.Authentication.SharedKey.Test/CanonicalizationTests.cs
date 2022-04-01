@@ -103,7 +103,6 @@ namespace idunno.Authentication.SharedKey.Test
         }
 
         // Notes - media-type always defaults to "text/plain; charset=utf-8" so it cannot be null.
-
         const string TextContentType = "text/plain; charset=utf-8";
 
         [Theory]
@@ -121,6 +120,7 @@ namespace idunno.Authentication.SharedKey.Test
         [InlineData("GET", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, "Sun, 02 Jan 2022 00:00:00 GMT", -1, -1, "GET\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\nSun, 02 Jan 2022 00:00:00 GMT\n\n")]
         [InlineData("GET", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, 1, -1, "GET\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\nbytes=1-\n")]
         [InlineData("GET", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, 1, 2, "GET\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\nbytes=1-2\n")]
+        [InlineData("GET", "gzip", "en-UK", 0, null, TextContentType, "Sat, 01 Jan 2022 00:00:00 GMT", null, "\"etag\"", "\"etag\"", null, 1, 2, "GET\ngzip\nen-UK\n0\n\ntext/plain; charset=utf-8\nSat, 01 Jan 2022 00:00:00 GMT\n\n\"etag\"\n\"etag\"\n\nbytes=1-2\n")]
         public void VerifyRequestCanonicialization(
             string method,
             string contentEncoding,
@@ -143,6 +143,7 @@ namespace idunno.Authentication.SharedKey.Test
 
             httpRequestMessage.Headers.Date = DateTime.Parse(date, new CultureInfo("en-US") , DateTimeStyles.AdjustToUniversal);
 
+            // We need content to create content headers, because Chris.
             if (contentType == null)
             {
                 httpRequestMessage.Content = new ByteArrayContent(Array.Empty<byte>());
@@ -187,8 +188,9 @@ namespace idunno.Authentication.SharedKey.Test
 
             if (!string.IsNullOrEmpty(contentType))
             {
-                // httpRequestMessage type already set when creating the content property.
+                httpRequestMessage.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, contentType);
                 httpRequest.Headers.Add(HeaderNames.ContentType, contentType);
+
             }
 
             if (!string.IsNullOrEmpty(ifModifiedSince))

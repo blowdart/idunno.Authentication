@@ -72,6 +72,45 @@ public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 }
 ```
 
+For .NET 6 minimal templates
+
+```c#
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme)
+    .AddBasic(options =>
+    {
+        options.Realm = "Basic Authentication";
+        options.Events = new BasicAuthenticationEvents
+        {
+            OnValidateCredentials = context =>
+            {
+                if (context.Username == context.Password)
+                {
+                    var claims = new[]
+                    {
+                                    new Claim(ClaimTypes.NameIdentifier, context.Username, ClaimValueTypes.String, context.Options.ClaimsIssuer),
+                                    new Claim(ClaimTypes.Name, context.Username, ClaimValueTypes.String, context.Options.ClaimsIssuer)
+                                };
+
+                    context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, context.Scheme.Name));
+                    context.Success();
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+    });
+builder.Services.AddAuthorization();
+```
+
+and then, before calls to any app.Map functions
+
+```c#
+app.UseAuthentication();
+app.UseAuthorization();
+```
+
 In the sample you can see that the delegate checks if the user name and password are identical. If they
 are then it will consider that a valid login, create set of claims about the user, using the `ClaimsIssuer` from the handler options, 
 then create an `ClaimsPrincipal` from those claims, using the `SchemeName` from the handler options, then finally call `context.Success();`
@@ -158,7 +197,7 @@ No nuget packages are available for older versions of ASP.NET Core.
 
 Basic Authentication sends credentials unencrypted. You should only use it over [HTTPS](https://en.wikipedia.org/wiki/HTTPS). 
 
-It may also have performance impacts, credentials are sent and validated with every request. As you should not be storing passwords in clear text your validation procedure will have to hash and compare values
+It may also have performance impacts as credentials are sent and validated with every request. As you should not be storing passwords in clear text your validation procedure will have to hash and compare values
 with every request, or cache results of previous hashes (which could lead to data leakage). 
 
 Remember that hash comparisons should be time consistent to avoid [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).

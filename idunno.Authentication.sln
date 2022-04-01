@@ -44,6 +44,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "idunno.Authentication.Basic
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "idunno.Authentication.SharedKey.Sample", "samples\idunno.Authentication.SharedKey.Sample\idunno.Authentication.SharedKey.Sample.csproj", "{772C5611-EB06-4878-A758-CEFF519764E0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "idunno.Authentication.Basic.Sample.net6", "samples\idunno.Authentication.Basic.Sample.net6\idunno.Authentication.Basic.Sample.net6.csproj", "{1D706A97-2F8A-46ED-81FD-2AD17E4710F3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,6 +88,10 @@ Global
 		{772C5611-EB06-4878-A758-CEFF519764E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{772C5611-EB06-4878-A758-CEFF519764E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{772C5611-EB06-4878-A758-CEFF519764E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D706A97-2F8A-46ED-81FD-2AD17E4710F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D706A97-2F8A-46ED-81FD-2AD17E4710F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D706A97-2F8A-46ED-81FD-2AD17E4710F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D706A97-2F8A-46ED-81FD-2AD17E4710F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -100,6 +106,7 @@ Global
 		{83CA0C3E-7B9E-4CFA-A0A6-1258940964CB} = {035D46E2-9278-4260-903B-66055D6CA268}
 		{116A502B-8196-4005-A067-2F8CA7ABC247} = {035D46E2-9278-4260-903B-66055D6CA268}
 		{772C5611-EB06-4878-A758-CEFF519764E0} = {AE540C4C-DE07-49DB-81BD-B77C1F9EB8BF}
+		{1D706A97-2F8A-46ED-81FD-2AD17E4710F3} = {AE540C4C-DE07-49DB-81BD-B77C1F9EB8BF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {80233162-A195-4B57-8FF8-44ACED97629D}
