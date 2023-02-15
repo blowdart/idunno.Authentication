@@ -11,7 +11,7 @@ First acquire an HTTPS certificate (see Notes below). Apply it to your website. 
 Lets Encrypt route and look like a phishing site.
 
 In your web application add a reference to the package, then in the `ConfigureServices` method in `startup.cs` call
-`app.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme).UseBasicAuthentication(...);` with your options, 
+`app.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme).AddBasic(...);` with your options, 
 providing a delegate for `OnValidateCredentials` to validate any user name and password sent with requests and turn that information 
 into an `ClaimsPrincipal`, set it on the `context.Principal` property and call `context.Success()`.
 
