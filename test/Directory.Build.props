@@ -8,7 +8,7 @@
   <!-- These packages must have matching versions. Do not believe Dependabot when it tries to update them individually -->
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
-    <PackageReference Include="Microsoft.CodeCoverage" Version="17.4.1" />
+    <PackageReference Include="Microsoft.CodeCoverage" Version="17.5.0" />
   </ItemGroup>
 
   <ItemGroup>
