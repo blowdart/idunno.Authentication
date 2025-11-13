@@ -17,11 +17,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-
-#if NET10_0_OR_GREATER
 using Microsoft.Extensions.Hosting;
-#endif
-
 using Microsoft.Net.Http.Headers;
 
 namespace idunno.Authentication.Basic.Test
@@ -707,7 +703,6 @@ namespace idunno.Authentication.Basic.Test
             Assert.Single(transaction.ResponseElement.Elements("claim"));
         }
 
-#if NET10_0_OR_GREATER
         private static async Task<TestServer> CreateServer(BasicAuthenticationOptions configureOptions, Func<HttpContext, Func<Task>?, Task>? handler = null, Uri? baseAddress = null)
         {
             var host = new HostBuilder()
@@ -804,95 +799,6 @@ namespace idunno.Authentication.Basic.Test
 
             return testServer;
         }
-#else
-        private static async Task<TestServer> CreateServer(BasicAuthenticationOptions configureOptions, Func<HttpContext, Func<Task>?, Task>? handler = null, Uri? baseAddress = null)
-        {
-            var builder = new WebHostBuilder().Configure(app =>
-            {
-                if (handler != null)
-                {
-                    app.Use(handler);
-                }
-
-                app.UseAuthentication();
-
-                app.Use(async (context, next) =>
-                {
-                    var request = context.Request;
-                    var response = context.Response;
-
-                    if (request.Path == new PathString("/"))
-                    {
-                        response.StatusCode = (int)HttpStatusCode.OK;
-                    }
-                    else if (request.Path == new PathString("/unauthorized"))
-                    {
-                        response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                    }
-                    else if (request.Path == new PathString("/forbidden"))
-                    {
-                        await context.ForbidAsync(BasicAuthenticationDefaults.AuthenticationScheme);
-                    }
-                    else if (request.Path == new PathString("/challenge"))
-                    {
-                        await context.ChallengeAsync(BasicAuthenticationDefaults.AuthenticationScheme);
-                    }
-                    else if (request.Path == new PathString("/whoami"))
-                    {
-
-                        var authenticationResult = await context.AuthenticateAsync();
-                        if (authenticationResult.Succeeded)
-                        {
-                            response.StatusCode = (int)HttpStatusCode.OK;
-                            response.ContentType = "text/xml";
-
-                            await response.WriteAsync("<claims>");
-                            foreach (Claim claim in context.User.Claims)
-                            {
-                                await response.WriteAsync($"<claim Type=\"{claim.Type}\" Issuer=\"{claim.Issuer}\">{claim.Value}</claim>");
-                            }
-                            await response.WriteAsync("</claims>");
-                        }
-                        else
-                        {
-                            await context.ChallengeAsync();
-                        }
-                    }
-                    else
-                    {
-                        await next();
-                    }
-                });
-            })
-            .ConfigureServices(services =>
-            {
-                if (configureOptions != null)
-                {
-                    services.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme).AddBasic(options =>
-                    {
-                        options.Events = configureOptions.Events;
-                        options.Realm = configureOptions.Realm;
-                        options.SuppressWWWAuthenticateHeader = configureOptions.SuppressWWWAuthenticateHeader;
-                        options.AdvertiseEncodingPreference = configureOptions.AdvertiseEncodingPreference;
-                        options.EncodingPreference = configureOptions.EncodingPreference;
-                    });
-                }
-                else
-                {
-                    services.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme).AddBasic();
-                }
-            });
-
-            var testServer = new TestServer(builder);
-
-            if (baseAddress is not null)
-            {
-                testServer.BaseAddress = baseAddress;
-            }
-
-            return testServer;
-        }
-#endif
 
         private static async Task<Transaction> SendAsync(TestServer server, string uri, string? userName = null, string? password = null, string scheme = "Basic")
         {
