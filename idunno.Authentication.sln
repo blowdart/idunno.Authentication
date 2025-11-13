@@ -1,12 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11205.157 d18.0
+VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E2FF6F9D-3B6D-4D51-8EE5-F3A8789B0B96}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		Directory.Build.props = Directory.Build.props
+		.runsettings = .runsettings
 		exclusion.dic = exclusion.dic
 		icon.png = icon.png
 		key.snk = key.snk
@@ -14,7 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		nuget.config = nuget.config
 		README.md = README.md
 		SECURITY.md = SECURITY.md
-		tests.runsettings = tests.runsettings
 		version.json = version.json
 	EndProjectSection
 EndProject
