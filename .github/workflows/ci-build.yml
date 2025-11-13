@@ -1,0 +1,84 @@
+name: CI Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+    paths-ignore:
+      - '.github/**'
+  pull_request:
+    branches:
+      - 'main'
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_GENERATE_ASPNET_CERTIFICATE: false
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  COVERAGE_REPORT: ${{ github.workspace}}/coveragereport
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: write
+      checks: write
+    steps:
+    - name: 'Harden Runner'
+      uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+      with:
+        egress-policy: audit
+
+    - name: 'Checkout'
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+        persist-credentials: false
+ 
+    - name: 'Setup .NET SDK'
+      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+      with:
+        dotnet-version: | 
+          10.0.x
+          9.0.x
+          8.0.x
+
+    - name: 'Restore external dependencies'
+      run: dotnet restore
+
+    - name: 'Build'
+      id: build
+      run: dotnet build --configuration Debug --no-restore
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      with:
+        name: build-artifacts
+        path: |
+          src/**/idunno.*.nupkg
+          src/**/idunno.*.dll
+          src/**/idunno.*.deps.json
+          src/**/idunno.*.xml
+        retention-days: 5
+
+    - name: 'Test'
+      id: test
+      run: dotnet test --no-build --restore --collect:"XPlat Code Coverage" --logger junit --settings .runsettings
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@34d7c956a59aed1bfebf31df77b8de55db9bbaaf # v2.21.0
+      if: always()
+      with:
+        files: "test/**/TestResults.xml"
+
+    - name: Upload Test Artifacts
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      with:
+        name: test-results
+        path: "test/**/TestResults.xml"
+        retention-days: 5

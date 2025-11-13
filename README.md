@@ -6,14 +6,11 @@ This repository contains a collection of various authentication mechanisms for A
 
 * [Basic Authentication](src/idunno.Authentication.Basic/)
 * [Shared Key Authentication](src/idunno.Authentication.SharedKey/)
-* [Certificate Authentication](src/idunno.Authentication.Certificate/)
 
 Basic Authentication started as a demonstration of how to write authentication middleware and was not as something you would seriously consider using, but apparently lots of you want Basic Authentication 
 for apis, webhooks and other things so here it is.
 
-Certificate Authentication was a common request on the ASP.NET Core Security repo, so I wrote one for ASP.NET Core 2.x.
-ASP.NET Core 3.0 took that as a starting point and ASP.NET Core now includes Certificate Authentication as a [supported package](https://docs.microsoft.com/en-us/aspnet/core/security/authentication/certauth?view=aspnetcore-3.1). 
-Please use that one.
+Certificate Authentication was has been built into ASP.NET Core since 3.0. The code here is now EOL as ASP.NET Core 2.1 is out of support.
 
 Shared Key Authentication is almost an implementation of the shared secret authentication Azure Blob Storage uses, with the Azure specific things like tenant identifier removed. If you're going to use
 this in a real project you should have someone else look over the hashing used to reassure yourself (and me) that it doesn't have any mistakes.
@@ -22,9 +19,8 @@ As digest authentication typically requires passwords to be stored somewhere in 
 
 ## ASP.NET Core versions supported
 
-Basic Authentication is available for ASP.NET Core 2.1 and later.
+Basic Authentication is available for ASP.NET Core 2.3 and later.
 Shared Key Authentication is available for ASP.NET Core 3.1 and later.
-Certification Authentication is only targeted at ASP.NET Core 2.1, for later versions use the [official package](https://docs.microsoft.com/en-us/aspnet/core/security/authentication/certauth).
 
 This is **not** an official Microsoft project, this is an "In my spare time, entirely unsupported"™ effort.
 
@@ -36,14 +32,14 @@ nuget packages are available.
 |---------------------|--------------------------------------------------------------------|
 | Basic               | https://www.nuget.org/packages/idunno.Authentication.Basic/        |
 | SharedKey           | https://www.nuget.org/packages/idunno.Authentication.SharedKey/    |
-| Certificate         | https://www.nuget.org/packages/idunno.Authentication.Certificate/  |
-
-Azure Artifacts holds a [feed of current dev builds](https://dev.azure.com/idunno-org/idunno.Authentication/_artifacts/feed/idunno.Authentication.Builds).
 
 ## Version History
 
 | Version | Notes |
 |---------|-------|
+|3.0.0    | Added .NET 10 support for Basic and SharedKey authentication handlers. <br />
+|         | Removed EOL targets from Basic Authentication and updated NetStandard2.0 to target [ASP.NET Core 2.3](https://devblogs.microsoft.com/dotnet/servicing-release-advisory-aspnetcore-23/). |
+|         | Certificate authentication is no longer supported or updated as ASP.NET Core 2.1 is out of support. |
 |2.4.0    | Added .NET 8 support for Basic and SharedKey, including deprecating the use of [ISystemClock](https://learn.microsoft.com/en-us/dotnet/core/compatibility/aspnet-core/8.0/isystemclock-obsolete). |
 |2.3.1    | Added support for credential encoding character sets, latin1 and utf8 to Basic Authentication. |
 |2.3.0    | Added Shared key authentication<br>Basic authentication now multi-targets ASP.NET Core 2.1, 3.0, 3.1, ASP.NET 5.0, 6.0 and 7.0 |

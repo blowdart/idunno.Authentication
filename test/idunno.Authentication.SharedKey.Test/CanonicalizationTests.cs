@@ -90,7 +90,7 @@ namespace idunno.Authentication.SharedKey.Test
             httpRequestMessage.Headers.Date = new DateTime(2022, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
             var httpRequest = new DefaultHttpContext().Request;
-            httpRequest.Headers.Add("Date", "Sat, 01 Jan 2022 00:00:00 GMT");
+            httpRequest.Headers.Append("Date", "Sat, 01 Jan 2022 00:00:00 GMT");
             httpRequest.Method = "GET";
             httpRequest.Protocol = "https";
             httpRequest.Host = new HostString("localhost");
@@ -161,19 +161,19 @@ namespace idunno.Authentication.SharedKey.Test
 
             var httpRequest = new DefaultHttpContext().Request;
             httpRequest.Method = method;
-            httpRequest.Headers.Add(HeaderNames.Date, date);
+            httpRequest.Headers.Append(HeaderNames.Date, date);
 
             if (!string.IsNullOrEmpty(contentEncoding))
             {
-                httpRequestMessage.Content = new ByteArrayContent(Array.Empty<byte>());
+                httpRequestMessage.Content = new ByteArrayContent([]);
                 httpRequestMessage.Content.Headers.ContentEncoding.Add(contentEncoding);
-                httpRequest.Headers.Add(HeaderNames.ContentEncoding, contentEncoding);
+                httpRequest.Headers.Append(HeaderNames.ContentEncoding, contentEncoding);
             }
 
             if (!string.IsNullOrEmpty(contentLanguage))
             {
                 httpRequestMessage.Content.Headers.ContentLanguage.Add(contentLanguage);
-                httpRequest.Headers.Add(HeaderNames.ContentLanguage, contentLanguage);
+                httpRequest.Headers.Append(HeaderNames.ContentLanguage, contentLanguage);
             }
 
             if (contentLength != -1)
@@ -185,38 +185,38 @@ namespace idunno.Authentication.SharedKey.Test
             if (!string.IsNullOrEmpty(contentMd5))
             {
                 httpRequestMessage.Content.Headers.ContentMD5 = Convert.FromBase64String(contentMd5);
-                httpRequest.Headers.Add(HeaderNames.ContentMD5, contentMd5);
+                httpRequest.Headers.Append(HeaderNames.ContentMD5, contentMd5);
             }
 
             if (!string.IsNullOrEmpty(contentType))
             {
                 httpRequestMessage.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, contentType);
-                httpRequest.Headers.Add(HeaderNames.ContentType, contentType);
+                httpRequest.Headers.Append(HeaderNames.ContentType, contentType);
 
             }
 
             if (!string.IsNullOrEmpty(ifModifiedSince))
             {
                 httpRequestMessage.Headers.TryAddWithoutValidation(HeaderNames.IfModifiedSince, ifModifiedSince);
-                httpRequest.Headers.Add(HeaderNames.IfModifiedSince, ifModifiedSince);
+                httpRequest.Headers.Append(HeaderNames.IfModifiedSince, ifModifiedSince);
             }
 
             if (!string.IsNullOrEmpty(ifMatch))
             {
                 httpRequestMessage.Headers.IfMatch.Add(new System.Net.Http.Headers.EntityTagHeaderValue(ifMatch));
-                httpRequest.Headers.Add(HeaderNames.IfMatch, ifMatch);
+                httpRequest.Headers.Append(HeaderNames.IfMatch, ifMatch);
             }
 
             if (!string.IsNullOrEmpty(ifNoneMatch))
             {
                 httpRequestMessage.Headers.IfNoneMatch.Add(new System.Net.Http.Headers.EntityTagHeaderValue(ifNoneMatch));
-                httpRequest.Headers.Add(HeaderNames.IfNoneMatch, ifNoneMatch);
+                httpRequest.Headers.Append(HeaderNames.IfNoneMatch, ifNoneMatch);
             }
 
             if (!string.IsNullOrEmpty(ifUnmodifiedSince))
             {
                 httpRequestMessage.Headers.IfUnmodifiedSince = DateTime.Parse(ifUnmodifiedSince, new CultureInfo("en-US"), DateTimeStyles.AdjustToUniversal);
-                httpRequest.Headers.Add(HeaderNames.IfUnmodifiedSince, ifUnmodifiedSince);
+                httpRequest.Headers.Append(HeaderNames.IfUnmodifiedSince, ifUnmodifiedSince);
             }
 
             if (rangeLower != -1)
@@ -232,11 +232,11 @@ namespace idunno.Authentication.SharedKey.Test
 
                 if (rangeUpper != -1)
                 {
-                    httpRequest.Headers.Add(HeaderNames.Range, $"bytes={rangeLower}-{rangeUpper}");
+                    httpRequest.Headers.Append(HeaderNames.Range, $"bytes={rangeLower}-{rangeUpper}");
                 }
                 else
                 {
-                    httpRequest.Headers.Add(HeaderNames.Range, $"bytes={rangeLower}-");
+                    httpRequest.Headers.Append(HeaderNames.Range, $"bytes={rangeLower}-");
                 }
             }
 

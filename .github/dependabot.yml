@@ -4,12 +4,34 @@ updates:
   directory: "/"
   schedule:
     interval: daily
-  reviewers:
-    - "blowdart"
+  cooldown:
+    default-days: 5
+  ignore:
+    - dependency-name: "Microsoft.AspNetCore.TestHost"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.Caching.Memory"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.DependencyInjection"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.Hosting"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.Logging"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.Logging.Console"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.Http"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.Options.DataAnnotation"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.Telemetry.Abstractions"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "System.Runtime.Caching"
+      update-types: ["version-update:semver-major"]
+
 
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:
     interval: "daily"
-  reviewers:
-    - "blowdart"
+  cooldown:
+    default-days: 5
