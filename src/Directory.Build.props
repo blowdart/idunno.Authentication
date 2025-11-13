@@ -28,7 +28,7 @@
 
   <ItemGroup Condition="'$(Configuration)' != 'CodeQL'">
     <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.4" PrivateAssets="All" />
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.139" PrivateAssets="All" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
