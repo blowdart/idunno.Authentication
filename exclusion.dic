@@ -1,1 +1,5 @@
 ﻿idunno
+netstandard
+netstandard2.0
+gzip
+hmac

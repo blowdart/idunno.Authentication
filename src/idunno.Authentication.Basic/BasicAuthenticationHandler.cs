@@ -1,11 +1,12 @@
 ﻿// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
-using System.Linq;
+#if NETSTANDARD2_0
+#nullable enable
+#endif
+
 using System.Text.Encodings.Web;
 using System.Text;
-using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
@@ -19,13 +20,7 @@ namespace idunno.Authentication.Basic
     {
         private const string _Scheme = "Basic";
 
-#pragma warning disable IDE0079
-#pragma warning disable IDE0090
-
-        private readonly UTF8Encoding _utf8ValidatingEncoding = new UTF8Encoding(false, true);
-
-#pragma warning restore IDE0090
-#pragma warning restore IDE0079
+        private readonly UTF8Encoding _utf8ValidatingEncoding = new (false, true);
 
         private readonly Encoding _iso88591ValidatingEncoding = Encoding.GetEncoding("ISO-8859-1",new EncoderExceptionFallback(), new DecoderExceptionFallback());
 
@@ -39,6 +34,7 @@ namespace idunno.Authentication.Basic
 
         [Obsolete("ISystemClock is obsolete, use TimeProvider on AuthenticationSchemeOptions instead.")]
 #endif
+#pragma warning disable IDE0290
         public BasicAuthenticationHandler(
             IOptionsMonitor<BasicAuthenticationOptions> options,
             ILoggerFactory logger,
@@ -46,14 +42,15 @@ namespace idunno.Authentication.Basic
             ISystemClock clock) : base(options, logger, encoder, clock)
         {
         }
+#pragma warning restore IDE0290
 
         /// <summary>
         /// The handler calls methods on the events which give the application control at certain points where processing is occurring.
         /// If it is not provided a default instance is supplied which does nothing when the methods are called.
         /// </summary>
-        protected new BasicAuthenticationEvents Events
+        protected new BasicAuthenticationEvents? Events
         {
-            get { return (BasicAuthenticationEvents)base.Events; }
+            get { return (BasicAuthenticationEvents?)base.Events; }
             set { base.Events = value; }
         }
 
@@ -62,10 +59,15 @@ namespace idunno.Authentication.Basic
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
 #if NET6_0_OR_GREATER
-            string authorizationHeader = Request.Headers.Authorization;
+            string? authorizationHeader = Request.Headers.Authorization;
 #else
-            string authorizationHeader = Request.Headers["Authorization"];
+            string? authorizationHeader = Request.Headers["Authorization"];
 #endif
+
+            if (authorizationHeader is null)
+            {
+               return AuthenticateResult.NoResult();
+            }
 
             if (string.IsNullOrEmpty(authorizationHeader))
             {
@@ -86,7 +88,11 @@ namespace idunno.Authentication.Basic
                 return AuthenticateResult.NoResult();
             }
 
+#if NET6_0_OR_GREATER
+            string encodedCredentials = authorizationHeader[_Scheme.Length..].Trim();
+#else
             string encodedCredentials = authorizationHeader.Substring(_Scheme.Length).Trim();
+#endif
 
             try
             {
@@ -131,8 +137,8 @@ namespace idunno.Authentication.Basic
                 }
                 catch (Exception ex)
                 {
-                    const string failedToDecodeCredentials = "Cannot build credentials from decoded base64 value, exception {ex.Message} encountered.";
-                    Logger.LogInformation(failedToDecodeCredentials, ex.Message);
+                    const string failedToDecodeCredentials = "Cannot build credentials from decoded base64 value.";
+                    Logger.LogInformation(message: failedToDecodeCredentials, exception: ex);
                     return AuthenticateResult.Fail(ex.Message);
                 }
 
@@ -140,22 +146,33 @@ namespace idunno.Authentication.Basic
                 if (delimiterIndex == -1)
                 {
                     const string missingDelimiterMessage = "Invalid credentials, missing delimiter.";
-                    Logger.LogInformation(missingDelimiterMessage);
+                    Logger.LogInformation(message: missingDelimiterMessage);
                     return AuthenticateResult.Fail(missingDelimiterMessage);
                 }
 
+#if NET6_0_OR_GREATER
+                var username = decodedCredentials[..delimiterIndex];
+                var password = decodedCredentials[(delimiterIndex + 1)..];
+
+#else
                 var username = decodedCredentials.Substring(0, delimiterIndex);
                 var password = decodedCredentials.Substring(delimiterIndex + 1);
+#endif
 
-                var validateCredentialsContext = new ValidateCredentialsContext(Context, Scheme, Options)
+                var validateCredentialsContext = new ValidateCredentialsContext(
+                    username,
+                    password,
+                    Context,
+                    Scheme,
+                    Options);
+
+                if (Events is not null)
                 {
-                    Username = username,
-                    Password = password
-                };
-
-                await Events.ValidateCredentials(validateCredentialsContext);
+                    await Events.ValidateCredentials(validateCredentialsContext);
+                }
 
                 if (validateCredentialsContext.Result != null &&
+                    validateCredentialsContext.Principal != null &&
                     validateCredentialsContext.Result.Succeeded)
                 {
                     var ticket = new AuthenticationTicket(validateCredentialsContext.Principal, Scheme.Name);
@@ -177,7 +194,10 @@ namespace idunno.Authentication.Basic
                     Exception = ex
                 };
 
-                await Events.AuthenticationFailed(authenticationFailedContext).ConfigureAwait(true);
+                if (Events is not null)
+                {
+                    await Events.AuthenticationFailed(authenticationFailedContext).ConfigureAwait(true);
+                }
 
                 if (authenticationFailedContext.Result != null)
                 {

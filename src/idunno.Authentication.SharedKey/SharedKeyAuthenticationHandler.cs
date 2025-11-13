@@ -1,12 +1,9 @@
 ﻿// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
-using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
-using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
@@ -28,6 +25,8 @@ namespace idunno.Authentication.SharedKey
 
         [Obsolete("ISystemClock is obsolete, use TimeProvider on AuthenticationSchemeOptions instead.")]
 #endif
+
+#pragma warning disable IDE0290
         public SharedKeyAuthenticationHandler(
             IOptionsMonitor<SharedKeyAuthenticationOptions> options,
             ILoggerFactory logger,
@@ -35,6 +34,7 @@ namespace idunno.Authentication.SharedKey
             ISystemClock clock) : base(options, logger, encoder, clock)
         {
         }
+#pragma warning restore IDE0290
 
         /// <summary>
         /// The handler calls methods on the events which give the application control at certain points where processing is occurring.
@@ -119,7 +119,7 @@ namespace idunno.Authentication.SharedKey
 
             try
             {
-                byte[] key = Options.KeyResolver(keyId);
+                byte[]? key = Options.KeyResolver(keyId);
                 if (key == null || key.Length == 0)
                 {
                     const string noKey = "Key identifier could not be resolved to a key.";
@@ -142,8 +142,8 @@ namespace idunno.Authentication.SharedKey
                 }
                 catch (Exception ex)
                 {
-                    const string failedToDecodeSignature = "Cannot build signature from decoded base64 value, exception {ex} encountered.";
-                    Logger.LogInformation(failedToDecodeSignature, ex);
+                    const string failedToDecodeSignature = "Cannot build signature from decoded base64 value";
+                    Logger.LogInformation(message: failedToDecodeSignature, exception: ex);
                     return AuthenticateResult.Fail(ex);
                 }
 
@@ -189,8 +189,8 @@ namespace idunno.Authentication.SharedKey
                         }
                         catch (Exception ex)
                         {
-                            const string failedToDecodeSignature = "Cannot decode Content-MD5 header, exception {ex} encountered.";
-                            Logger.LogInformation(failedToDecodeSignature, ex);
+                            const string failedToDecodeSignature = "Cannot decode Content-MD5 header.";
+                            Logger.LogInformation(message: failedToDecodeSignature, exception: ex);
                             return AuthenticateResult.Fail(ex);
                         }
 

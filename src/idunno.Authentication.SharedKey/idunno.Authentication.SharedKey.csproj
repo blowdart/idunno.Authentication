@@ -1,40 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<Description>ASP.NET Core middleware that enables an application to support a type of shared key authentication.</Description>
-		<PackageTags>aspnetcore;authentication;security</PackageTags>
-		<Nullable>enable</Nullable>
-		<Configurations>Debug;Release;CodeQL</Configurations>
-	</PropertyGroup>
+    <PropertyGroup>
+        <Description>ASP.NET Core middleware that enables an application to support a type of shared key authentication.</Description>
+        <PackageTags>aspnetcore;authentication;security</PackageTags>
+        <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;CodeQL</Configurations>
+    </PropertyGroup>
 
-	<Choose>
-		<When Condition="'$(Configuration)' != 'CodeQL'">
-			<PropertyGroup>
-				<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
-			</PropertyGroup>
-		</When>
-		<Otherwise>
-			<PropertyGroup>
-				<!-- CodeQL doesn't do .NET 10 yet -->
-				<TargetFramework>net9.0</TargetFramework>
-			</PropertyGroup>
-		</Otherwise>
-	</Choose>
+    <Choose>
+        <When Condition="'$(Configuration)' != 'CodeQL'">
+            <PropertyGroup>
+                <TargetFrameworks>net6.0;net8.0;net9.0;net10.0</TargetFrameworks>
+            </PropertyGroup>
+        </When>
+        <Otherwise>
+            <PropertyGroup>
+                <!-- CodeQL doesn't do .NET 10 yet -->
+                <TargetFramework>net9.0</TargetFramework>
+            </PropertyGroup>
+        </Otherwise>
+    </Choose>
 
-	<ItemGroup>
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-	</ItemGroup>
+    <PropertyGroup>
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    </PropertyGroup>
 
-	<Choose>
-		<When Condition=" '$(Configuration)'=='Debug' ">
-			<ItemGroup>
-				<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-					<_Parameter1>
-						idunno.Authentication.SharedKey.Test, PublicKey=002400000480000094000000060200000024000052534131000400000100010099e714599c6ba501e5478924358f06c4ea1f5ea33ed76263ded093ad46ea217ccb217daabf31c5ccfef779ed0e7866f0d06ea80fb8db3ed4819cf8bbcae3bd947bb79413fb7dfde85b869ec7512396cb337374a925fad0a6caf86200c92ca71cbc4547923fa77e617b0861c13071893c71740c0f91d56fc2b5bd77b396f8aff0
-					</_Parameter1>
-				</AssemblyAttribute>
-			</ItemGroup>
-		</When>
-	</Choose>
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <Choose>
+        <When Condition=" '$(Configuration)'=='Debug' ">
+            <ItemGroup>
+                <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+                    <_Parameter1>
+                        idunno.Authentication.SharedKey.Test, PublicKey=002400000480000094000000060200000024000052534131000400000100010099e714599c6ba501e5478924358f06c4ea1f5ea33ed76263ded093ad46ea217ccb217daabf31c5ccfef779ed0e7866f0d06ea80fb8db3ed4819cf8bbcae3bd947bb79413fb7dfde85b869ec7512396cb337374a925fad0a6caf86200c92ca71cbc4547923fa77e617b0861c13071893c71740c0f91d56fc2b5bd77b396f8aff0
+                    </_Parameter1>
+                </AssemblyAttribute>
+            </ItemGroup>
+        </When>
+    </Choose>
 
 </Project>

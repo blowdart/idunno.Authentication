@@ -3,15 +3,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
-using Xunit;
 
 namespace idunno.Authentication.SharedKey.Test
 {
@@ -23,7 +20,7 @@ namespace idunno.Authentication.SharedKey.Test
         {
             var requestLoggingHandler = new RequestLoggingHandler();
 
-            var handlerPipeline = new SharedKey.SharedKeyHttpMessageHandler("keyID", Array.Empty<byte>())
+            var handlerPipeline = new SharedKeyHttpMessageHandler("keyID", [])
             {
                 InnerHandler = requestLoggingHandler
             };
@@ -38,8 +35,11 @@ namespace idunno.Authentication.SharedKey.Test
             }
 
             Assert.Single(requestLoggingHandler.Requests);
-            Assert.NotNull(requestLoggingHandler.Requests[0].Headers.Authorization);
-            Assert.Equal("SharedKey", requestLoggingHandler.Requests[0].Headers.Authorization.Scheme);
+
+            var request = requestLoggingHandler.Requests[0];
+            Assert.NotNull(request.Headers.Authorization);
+
+            Assert.Equal("SharedKey", request.Headers.Authorization.Scheme);
         }
 
         [Fact]
@@ -47,7 +47,7 @@ namespace idunno.Authentication.SharedKey.Test
         {
             var requestLoggingHandler = new RequestLoggingHandler();
 
-            var handlerPipeline = new SharedKey.SharedKeyHttpMessageHandler("keyID", Array.Empty<byte>())
+            var handlerPipeline = new SharedKeyHttpMessageHandler("keyID", [])
             {
                 InnerHandler = requestLoggingHandler
             };
@@ -72,7 +72,7 @@ namespace idunno.Authentication.SharedKey.Test
 
             var requestLoggingHandler = new RequestLoggingHandler();
 
-            var handlerPipeline = new SharedKey.SharedKeyHttpMessageHandler("keyID", Array.Empty<byte>())
+            var handlerPipeline = new SharedKeyHttpMessageHandler("keyID", [])
             {
                 InnerHandler = requestLoggingHandler
             };
@@ -96,7 +96,7 @@ namespace idunno.Authentication.SharedKey.Test
         {
             var requestLoggingHandler = new RequestLoggingHandler();
 
-            var handlerPipeline = new SharedKey.SharedKeyHttpMessageHandler("keyID", Array.Empty<byte>())
+            var handlerPipeline = new SharedKeyHttpMessageHandler("keyID", [])
             {
                 InnerHandler = requestLoggingHandler
             };
@@ -107,15 +107,20 @@ namespace idunno.Authentication.SharedKey.Test
                 {
                     httpRequestMessage.Content = new StringContent("body");
                     await httpClient.SendAsync(httpRequestMessage);
-                };
+                }
+                ;
             }
 
             Assert.Single(requestLoggingHandler.Requests);
-            Assert.NotNull(requestLoggingHandler.Requests[0].Content.Headers.ContentMD5);
 
-            using var md5 = MD5.Create();
-            var expected = md5.ComputeHash(Encoding.ASCII.GetBytes("body"));
-            Assert.Equal(expected, requestLoggingHandler.Requests[0].Content.Headers.ContentMD5);
+            var request = requestLoggingHandler.Requests[0];
+            Assert.NotNull(request);
+            Assert.NotNull(request.Content);
+            Assert.NotNull(request.Content.Headers);
+            Assert.NotNull(request.Content.Headers.ContentMD5);
+
+            var expected = MD5.HashData(Encoding.ASCII.GetBytes("body"));
+            Assert.Equal(expected, request.Content.Headers.ContentMD5);
         }
 
         [Fact]
@@ -123,7 +128,7 @@ namespace idunno.Authentication.SharedKey.Test
         {
             var requestLoggingHandler = new RequestLoggingHandler();
 
-            var handlerPipeline = new SharedKey.SharedKeyHttpMessageHandler("keyID", Array.Empty<byte>())
+            var handlerPipeline = new SharedKeyHttpMessageHandler("keyID", [])
             {
                 InnerHandler = requestLoggingHandler
             };
@@ -139,7 +144,12 @@ namespace idunno.Authentication.SharedKey.Test
             }
 
             Assert.Single(requestLoggingHandler.Requests);
-            Assert.Null(requestLoggingHandler.Requests[0].Content.Headers.ContentMD5);
+
+            var request = requestLoggingHandler.Requests[0];
+            Assert.NotNull(request);
+            Assert.NotNull(request.Content);
+            Assert.NotNull(request.Content.Headers);
+            Assert.Null(request.Content.Headers.ContentMD5);
         }
 
         [Fact]
@@ -147,7 +157,7 @@ namespace idunno.Authentication.SharedKey.Test
         {
             var requestLoggingHandler = new RequestLoggingHandler();
 
-            var handlerPipeline = new SharedKey.SharedKeyHttpMessageHandler("keyID", Array.Empty<byte>())
+            var handlerPipeline = new SharedKeyHttpMessageHandler("keyID", [])
             {
                 InnerHandler = requestLoggingHandler
             };
@@ -161,6 +171,7 @@ namespace idunno.Authentication.SharedKey.Test
             }
 
             Assert.Single(requestLoggingHandler.Requests);
+
             Assert.Null(requestLoggingHandler.Requests[0].Content);
         }
 
@@ -171,7 +182,7 @@ namespace idunno.Authentication.SharedKey.Test
 
             var requestLoggingHandler = new RequestLoggingHandler();
 
-            var handlerPipeline = new SharedKey.SharedKeyHttpMessageHandler(keyID, Array.Empty<byte>())
+            var handlerPipeline = new SharedKeyHttpMessageHandler(keyID, [])
             {
                 InnerHandler = requestLoggingHandler
             };
@@ -186,12 +197,18 @@ namespace idunno.Authentication.SharedKey.Test
             }
 
             Assert.Single(requestLoggingHandler.Requests);
-            Assert.Equal(keyID, requestLoggingHandler.Requests[0].Headers.Authorization.Parameter[..keyID.Length]);
+
+            var request = requestLoggingHandler.Requests[0];
+            Assert.NotNull(request);
+            Assert.NotNull(request.Headers.Authorization);
+            Assert.NotNull(request.Headers.Authorization.Parameter);
+
+            Assert.Equal(keyID, request.Headers.Authorization.Parameter[..keyID.Length]);
         }
 
         public class RequestLoggingHandler : DelegatingHandler
         {
-            private readonly List<HttpRequestMessage> requests = new();
+            private readonly List<HttpRequestMessage> requests = [];
 
             protected override Task<HttpResponseMessage> SendAsync(
                 HttpRequestMessage request, CancellationToken cancellationToken)

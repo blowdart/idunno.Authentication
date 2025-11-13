@@ -1,26 +1,25 @@
 <Project>
-  <Import Project="..\Directory.Build.props" />
-  <PropertyGroup>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <IsPublishable>False</IsPublishable>
-  </PropertyGroup>
+    <Import Project="..\Directory.Build.props" />
+    <PropertyGroup>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <IsPublishable>False</IsPublishable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
 
-  <PropertyGroup>
-  <!-- Disable breaking on nuget warning about packages with vulnerabilties because I need to use the lowest
-       version possible as the baseline for aspnet.all -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1903;NU1902</WarningsNotAsErrors>
-  </PropertyGroup>
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage" />
+    </ItemGroup>
 
-  <!-- These packages must have matching versions. Do not believe Dependabot when it tries to update them individually -->
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
-    <PackageReference Include="Microsoft.CodeCoverage" Version="18.0.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <Using Include="System.Diagnostics.CodeAnalysis" />
+        <Using Include="Xunit" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="6.0.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="JunitXml.TestLogger" Version="7.0.2" />
+    </ItemGroup>
 </Project>

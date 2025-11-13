@@ -1,18 +1,14 @@
 ﻿// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Globalization;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Web;
-
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
+using System;
+using System.Collections;
+using System.Collections.Specialized;
+using System.Globalization;
+using System.Text;
+using System.Web;
 
 namespace idunno.Authentication.SharedKey
 {
@@ -20,15 +16,8 @@ namespace idunno.Authentication.SharedKey
     {
         public static string CanonicalizeHeaders(this HttpRequestMessage request)
         {
-            if (request == null)
-            {
-                throw new ArgumentNullException(nameof(request));
-            }
-
-            if (request.Headers == null)
-            {
-                throw new NullReferenceException("Request has no headers.");
-            }
+            ArgumentNullException.ThrowIfNull(request);
+            ArgumentNullException.ThrowIfNull(request.Headers);
 
             var canonicalizedHeaderBuilder = new CanonicalizedStringBuilder();
             canonicalizedHeaderBuilder.Append(request.Method.ToString().ToUpperInvariant());
@@ -63,20 +52,9 @@ namespace idunno.Authentication.SharedKey
 
         public static string CanonicalizeResource(this HttpRequestMessage request)
         {
-            if (request == null)
-            {
-                throw new ArgumentNullException(nameof(request));
-            }
-
-            if (request.RequestUri == null)
-            {
-                throw new ArgumentException("request has no URI.");
-            }
-
-            if (request.RequestUri.AbsolutePath == null)
-            {
-                throw new ArgumentException("RequestURI has no absolute path.");
-            }
+            ArgumentNullException.ThrowIfNull(request);
+            ArgumentNullException.ThrowIfNull(request.RequestUri);
+            ArgumentNullException.ThrowIfNull(request.RequestUri.AbsolutePath);
 
             var canonicalizedResourceBuilder = new StringBuilder();
 
@@ -93,14 +71,11 @@ namespace idunno.Authentication.SharedKey
 
         public static string CanonicalizeHeaders(this HttpRequest request)
         {
-            if (request == null)
+            ArgumentNullException.ThrowIfNull(request);
+            ArgumentNullException.ThrowIfNull(request.GetTypedHeaders());
+            if (!request.GetTypedHeaders().Date.HasValue)
             {
-                throw new ArgumentNullException(nameof(request));
-            }
-
-            if (request.GetTypedHeaders().Date == null)
-            {
-                throw new ArgumentException("Request has no date header.");
+                throw new ArgumentNullException("request.GetTypedHeaders().Date");
             }
 
             var canonicalizedHeaderBuilder = new CanonicalizedStringBuilder();
@@ -134,16 +109,13 @@ namespace idunno.Authentication.SharedKey
 
         public static string CanonicalizeResource(this HttpRequest request)
         {
-            if (request == null)
-            {
-                throw new ArgumentNullException(nameof(request));
-            }
+            ArgumentNullException.ThrowIfNull(request);
 
             var canonicalizedResourceBuilder = new StringBuilder();
 
             canonicalizedResourceBuilder.Append(request.Path);
 
-            if (request.QueryString.Value != null && request.Query.Any())
+            if (request.QueryString.Value != null && request.Query.Count != 0)
             {
                 canonicalizedResourceBuilder.Append(CanonicalizeQueryString(request.QueryString.Value));
             }

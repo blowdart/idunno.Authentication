@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
 using System.Net.Http;
@@ -20,12 +19,10 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
-using Xunit;
 
 namespace idunno.Authentication.SharedKey.Test
 {
 #if (DEBUG)
-    [ExcludeFromCodeCoverage]
     // As Chris, in his infinite wisdom decided that HttpMessage wasn't good enough for ASP.NET inbound requests we ought to validate
     // expectations around the mapping of HttpMessage to HttpRequestMessage. Thanks @Tratcher!
     // These checks will only run in debug compiles as they're validating internal APIs, and debug wrapping allows us to avoid unnecessary
@@ -35,7 +32,7 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task VerifyHttpMessageHasTheSameSignatureAsTheCorrespondingHttpRequest()
         {
-            const string keyId = "keyid";
+            const string keyId = "keyId";
             byte[] key = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(key);
@@ -82,7 +79,7 @@ namespace idunno.Authentication.SharedKey.Test
         [InlineData("api", "c&a=3&b=2&a=1", "/api\n:c\na:1,3\nb:2")]
         [InlineData("api", "c", "/api\n:c")]
         [InlineData("api/", "a=1", "/api/\na:1")]
-        public void VerifyResourceCanonicialization(string path, string query, string expected)
+        public void VerifyResourceCanonicalization(string path, string query, string expected)
         {
             var httpMethod = new HttpMethod("GET");
             var requestUri = $"https://localhost/{path}?{query}";
@@ -123,18 +120,18 @@ namespace idunno.Authentication.SharedKey.Test
         [InlineData("GET", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, 1, -1, "GET\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\nbytes=1-\n")]
         [InlineData("GET", null, null, -1, null, null, "Sat, 01 Jan 2022 00:00:00 GMT", null, null, null, null, 1, 2, "GET\n\n\n0\n\n\nSat, 01 Jan 2022 00:00:00 GMT\n\n\n\n\nbytes=1-2\n")]
         [InlineData("GET", "gzip", "en-UK", 0, null, TextContentType, "Sat, 01 Jan 2022 00:00:00 GMT", null, "\"etag\"", "\"etag\"", null, 1, 2, "GET\ngzip\nen-UK\n0\n\ntext/plain; charset=utf-8\nSat, 01 Jan 2022 00:00:00 GMT\n\n\"etag\"\n\"etag\"\n\nbytes=1-2\n")]
-        public void VerifyRequestCanonicialization(
+        public void VerifyRequestCanonicalization(
             string method,
-            string contentEncoding,
-            string contentLanguage,
+            string? contentEncoding,
+            string? contentLanguage,
             long contentLength,
-            string contentMd5,
-            string contentType,
+            string? contentMd5,
+            string? contentType,
             string date,
-            string ifModifiedSince,
-            string ifMatch,
-            string ifNoneMatch,
-            string ifUnmodifiedSince,
+            string? ifModifiedSince,
+            string? ifMatch,
+            string? ifNoneMatch,
+            string? ifUnmodifiedSince,
             long rangeLower,
             long rangeUpper,
             string expected)
@@ -148,7 +145,7 @@ namespace idunno.Authentication.SharedKey.Test
             // We need content to create content headers, because Chris.
             if (contentType == null)
             {
-                httpRequestMessage.Content = new ByteArrayContent(Array.Empty<byte>());
+                httpRequestMessage.Content = new ByteArrayContent([]);
             }
             else if (contentType.Equals(TextContentType, StringComparison.OrdinalIgnoreCase))
             {
@@ -248,31 +245,21 @@ namespace idunno.Authentication.SharedKey.Test
         }
 
 
-        public class RequestLoggingHandler : DelegatingHandler
+        public class RequestLoggingHandler(IList<byte[]> requestSignatures) : DelegatingHandler
         {
-            private readonly IList<byte[]> _requestSignatures;
-
-            public RequestLoggingHandler(IList<byte[]> requestSignatures)
-            {
-                _requestSignatures = requestSignatures;
-            }
-
             protected override Task<HttpResponseMessage> SendAsync(
                 HttpRequestMessage request, CancellationToken cancellationToken)
             {
-                if (request == null)
-                {
-                    throw new ArgumentNullException(nameof(request));
-                }
+                ArgumentNullException.ThrowIfNull(request);
 
-                AuthenticationHeaderValue authenticationHeaderValue = request.Headers.Authorization;
+                var authenticationHeaderValue = request.Headers.Authorization;
 
                 if (authenticationHeaderValue != null)
                 {
                     if (authenticationHeaderValue.Parameter != null)
                     {
                         string encodedSignature = authenticationHeaderValue.Parameter[(authenticationHeaderValue.Parameter.IndexOf(':', StringComparison.OrdinalIgnoreCase) + 1)..];
-                        _requestSignatures.Add(Convert.FromBase64String(encodedSignature));
+                        requestSignatures.Add(Convert.FromBase64String(encodedSignature));
                     }
                 }
 
@@ -281,9 +268,9 @@ namespace idunno.Authentication.SharedKey.Test
         }
 
         private static async Task<IHost> CreateHost(
-            IList<byte[]> requestSignatures,
+            List<byte[]> requestSignatures,
             byte[] key,
-            Uri baseAddress = null)
+            Uri? baseAddress = null)
         {
             var host = new HostBuilder()
                  .ConfigureWebHost(builder =>
@@ -304,7 +291,12 @@ namespace idunno.Authentication.SharedKey.Test
             await host.StartAsync();
 
             var server = host.GetTestServer();
-            server.BaseAddress = baseAddress;
+
+            if (baseAddress != null)
+            {
+                server.BaseAddress = baseAddress;
+            }
+
             return host;
         }
     }

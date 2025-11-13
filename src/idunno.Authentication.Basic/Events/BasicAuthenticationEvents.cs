@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
-using System.Threading.Tasks;
 
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace idunno.Authentication.Basic
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 {
     /// <summary>
     /// This default implementation of the IBasicAuthenticationEvents may be used if the

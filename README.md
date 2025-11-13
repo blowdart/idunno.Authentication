@@ -1,7 +1,5 @@
 ﻿# idunno.Authentication
 
-[![Build Status](https://dev.azure.com/idunno-org/idunno.Authentication/_apis/build/status/blowdart.idunno.Authentication?branchName=dev)](https://dev.azure.com/idunno-org/idunno.Authentication/_build/latest?definitionId=1&branchName=dev)
-
 This repository contains a collection of various authentication mechanisms for ASP.NET Core, including
 
 * [Basic Authentication](src/idunno.Authentication.Basic/)

@@ -20,7 +20,7 @@ namespace idunno.Authentication.SharedKey
             set { base.Events = value; }
         }
 
-        public Func<string, byte[]> KeyResolver { get; set; } = (keyId) => { return Array.Empty<byte>(); };
+        public Func<string, byte[]?> KeyResolver { get; set; } = (keyId) => { return null; };
 
         public TimeSpan MaximumMessageValidity { get; set; } = new TimeSpan(0, 15, 0);
     }

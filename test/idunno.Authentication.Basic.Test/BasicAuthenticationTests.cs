@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -17,13 +17,15 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Net.Http.Headers;
 
-using Xunit;
+#if NET10_0_OR_GREATER
+using Microsoft.Extensions.Hosting;
+#endif
+
+using Microsoft.Net.Http.Headers;
 
 namespace idunno.Authentication.Basic.Test
 {
-    [ExcludeFromCodeCoverage]
     public class BasicAuthenticationHandlerTests
     {
         [Fact]
@@ -54,22 +56,23 @@ namespace idunno.Authentication.Basic.Test
         public void SettingANonAsciiRealmThrows()
         {
             var options = new BasicAuthenticationOptions();
-            Exception ex = Assert.Throws<ArgumentException>(() => options.Realm = "💩");
+            var ex = Assert.Throws<ArgumentException>(() => options.Realm = "💩");
             Assert.Equal("Realm must be US ASCII", ex.Message);
         }
 
         [Fact]
         public async Task NormalRequestPassesThrough()
         {
-            var server = CreateServer(new BasicAuthenticationOptions());
+            using var server = await CreateServer(new BasicAuthenticationOptions());
             var response = await server.CreateClient().GetAsync("https://example.com/");
+
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
         public async Task NormalWithAuthenticationRequestPassesThrough()
         {
-            var server = CreateServer(new BasicAuthenticationOptions());
+            using var server = await CreateServer(new BasicAuthenticationOptions());
 
             var transaction = await SendAsync(server, "https://example.com/", "username", "password");
             Assert.Equal(HttpStatusCode.OK, transaction.Response.StatusCode);
@@ -79,68 +82,88 @@ namespace idunno.Authentication.Basic.Test
         [Fact]
         public async Task ProtectedPathReturnsUnauthorizedWithWWWAuthenticateHeaderAndScheme()
         {
-            var server = CreateServer(new BasicAuthenticationOptions());
+            using var server = await CreateServer(new BasicAuthenticationOptions());
             var response = await server.CreateClient().GetAsync("https://example.com/unauthorized");
+
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
         [Fact]
         public async Task ProtectedPathRequestWithBadSchemeReturnsUnauthorized()
         {
-            var server = CreateServer(new BasicAuthenticationOptions());
+            using var server = await CreateServer(new BasicAuthenticationOptions());
             var transaction = await SendAsync(server, "https://example.com/unauthorized", "username", "password", "bogus");
+
             Assert.Equal(HttpStatusCode.Unauthorized, transaction.Response.StatusCode);
         }
 
         [Fact]
         public async Task ForbiddenPathReturnsForbiddenStatus()
         {
-            var server = CreateServer(new BasicAuthenticationOptions());
-            var response = await server.CreateClient().GetAsync("https://example.com/forbidden");
+            var server = await CreateServer(new BasicAuthenticationOptions());
+            using var response = await server.CreateClient().GetAsync("https://example.com/forbidden");
+
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         }
 
         [Fact]
         public async Task ChallengePathReturnsUnauthorizedWithWWWAuthenticateHeaderAndSchemeWhenNoAuthenticateHeaderIsPresent()
         {
-            var server = CreateServer(new BasicAuthenticationOptions());
-            var response = await server.CreateClient().GetAsync("https://example.com/challenge");
+            var server = await CreateServer(new BasicAuthenticationOptions());
+            using var response = await server.CreateClient().GetAsync("https://example.com/challenge");
+
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             Assert.Single(response.Headers.WwwAuthenticate);
-            Assert.Equal("Basic", response.Headers.WwwAuthenticate.First().Scheme);
-            Assert.Equal("realm=\"\"", response.Headers.WwwAuthenticate.First().Parameter.ToString());
+
+            var authenticateHeader = response.Headers.WwwAuthenticate.First();
+            Assert.NotNull(authenticateHeader);
+            Assert.Equal("Basic", authenticateHeader.Scheme);
+
+            Assert.NotNull(authenticateHeader.Parameter);
+            Assert.Equal("realm=\"\"", authenticateHeader.Parameter);
         }
 
 
         [Fact]
         public async Task ChallengePathReturnsUnauthorizedWithWWWAuthenticateHeaderSchemeAndConfiguredRealmWhenNoAuthenticateHeaderIsPresent()
         {
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Realm = "realm"
             });
+
             var response = await server.CreateClient().GetAsync("https://example.com/challenge");
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             Assert.Single(response.Headers.WwwAuthenticate);
-            Assert.Equal("Basic", response.Headers.WwwAuthenticate.First().Scheme);
-            Assert.Equal("realm=\"realm\"", response.Headers.WwwAuthenticate.First().Parameter.ToString());
+
+            var authenticateHeader = response.Headers.WwwAuthenticate.First();
+            Assert.NotNull(authenticateHeader);
+            Assert.Equal("Basic", authenticateHeader.Scheme);
+
+            Assert.NotNull(authenticateHeader.Parameter);
+            Assert.Equal("realm=\"realm\"", authenticateHeader.Parameter);
         }
 
         [Fact]
         public async Task ChallengePathReturnsUnauthorizedWithWWWAuthenticateHeaderSchemeAndConfiguredRealmAndUnicodeCharsetWhenNoAuthenticateHeaderIsPresentAndAdvertiseEncodingIsTrueAndEncodingPreferenceIsUnicode()
         {
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Realm = "realm",
                 AdvertiseEncodingPreference = true,
                 EncodingPreference = EncodingPreference.Utf8
             });
+
             var response = await server.CreateClient().GetAsync("https://example.com/challenge");
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             Assert.Single(response.Headers.WwwAuthenticate);
-            Assert.Equal("Basic", response.Headers.WwwAuthenticate.First().Scheme);
 
-            var parameters = response.Headers.WwwAuthenticate.First().Parameter.Split(' ');
+            var authenticateHeader = response.Headers.WwwAuthenticate.First();
+            Assert.NotNull(authenticateHeader);
+            Assert.Equal("Basic", authenticateHeader.Scheme);
+
+            Assert.NotNull(authenticateHeader.Parameter);
+            var parameters = authenticateHeader.Parameter.Split(' ');
             Assert.Equal("realm=\"realm\",", parameters[0]);
             Assert.Equal("charset=\"UTF-8\"", parameters[1]);
         }
@@ -148,18 +171,24 @@ namespace idunno.Authentication.Basic.Test
         [Fact]
         public async Task ChallengePathReturnsUnauthorizedWithWWWAuthenticateHeaderSchemeAndConfiguredRealmAndUnicodeCharsetWhenNoAuthenticateHeaderIsPresentAndAdvertiseEncodingIsTrueAndEncodingPreferenceIsPreferUnicode()
         {
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Realm = "realm",
                 AdvertiseEncodingPreference = true,
                 EncodingPreference = EncodingPreference.PreferUtf8
             });
+
             var response = await server.CreateClient().GetAsync("https://example.com/challenge");
+
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             Assert.Single(response.Headers.WwwAuthenticate);
-            Assert.Equal("Basic", response.Headers.WwwAuthenticate.First().Scheme);
 
-            var parameters = response.Headers.WwwAuthenticate.First().Parameter.Split(' ');
+            var authenticateHeader = response.Headers.WwwAuthenticate.First();
+            Assert.NotNull(authenticateHeader);
+            Assert.Equal("Basic", authenticateHeader.Scheme);
+
+            Assert.NotNull(authenticateHeader.Parameter);
+            var parameters = authenticateHeader.Parameter.Split(' ');
             Assert.Equal("realm=\"realm\",", parameters[0]);
             Assert.Equal("charset=\"UTF-8\"", parameters[1]);
         }
@@ -167,18 +196,24 @@ namespace idunno.Authentication.Basic.Test
         [Fact]
         public async Task ChallengePathReturnsUnauthorizedWithWWWAuthenticateHeaderSchemeAndConfiguredRealmAndUnicodeCharsetWhenNoAuthenticateHeaderIsPresentAndAdvertiseEncodingIsTrueAndEncodingPreferenceIsLatin1()
         {
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Realm = "realm",
                 AdvertiseEncodingPreference = true,
                 EncodingPreference = EncodingPreference.Latin1
             });
+
             var response = await server.CreateClient().GetAsync("https://example.com/challenge");
+
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             Assert.Single(response.Headers.WwwAuthenticate);
-            Assert.Equal("Basic", response.Headers.WwwAuthenticate.First().Scheme);
 
-            var parameters = response.Headers.WwwAuthenticate.First().Parameter.Split(' ');
+            var authenticateHeader = response.Headers.WwwAuthenticate.First();
+            Assert.NotNull(authenticateHeader);
+            Assert.Equal("Basic", authenticateHeader.Scheme);
+
+            Assert.NotNull(authenticateHeader.Parameter);
+            var parameters = authenticateHeader.Parameter.Split(' ');
             Assert.Equal("realm=\"realm\",", parameters[0]);
             Assert.Equal("charset=\"ISO-8859-1\"", parameters[1]);
         }
@@ -186,7 +221,7 @@ namespace idunno.Authentication.Basic.Test
         [Fact]
         public async Task ChallengePathReturnsUnauthorizedWhenAnAuthorizeHeaderIsSentAndFailsValidation()
         {
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Events = new BasicAuthenticationEvents
                 {
@@ -198,6 +233,7 @@ namespace idunno.Authentication.Basic.Test
             });
 
             var transaction = await SendAsync(server, "https://example.com/challenge", "username", "password");
+
             Assert.Equal(HttpStatusCode.Unauthorized, transaction.Response.StatusCode);
         }
 
@@ -205,7 +241,8 @@ namespace idunno.Authentication.Basic.Test
         public async Task ValidateOnValidateCredentialsCalledWhenCredentialsProvided()
         {
             bool called = false;
-            var server = CreateServer(new BasicAuthenticationOptions
+
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Events = new BasicAuthenticationEvents
                 {
@@ -218,6 +255,7 @@ namespace idunno.Authentication.Basic.Test
             });
 
             var transaction = await SendAsync(server, "https://example.com/", "username", "password");
+
             Assert.True(called);
         }
 
@@ -225,7 +263,8 @@ namespace idunno.Authentication.Basic.Test
         public async Task ValidateOnValidateCredentialsIsNotCalledWhenNoCredentialsAreProvided()
         {
             bool called = false;
-            var server = CreateServer(new BasicAuthenticationOptions
+
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Events = new BasicAuthenticationEvents
                 {
@@ -236,18 +275,19 @@ namespace idunno.Authentication.Basic.Test
                     }
                 }
             });
-
             var transaction = await SendAsync(server, "https://example.com/");
+
             Assert.False(called);
         }
 
         [Fact]
         public async Task ValidateUpgradeRequestedReturnedOnHttpRequest()
         {
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
             });
             var response = await server.CreateClient().GetAsync("http://example.com/challenge");
+
             Assert.Equal(StatusCodes.Status421MisdirectedRequest, (int)response.StatusCode);
             Assert.Empty(response.Headers.WwwAuthenticate);
         }
@@ -256,7 +296,7 @@ namespace idunno.Authentication.Basic.Test
         public async Task ValidateHandlerWillRespondOnHttpWhenSecurityIsDisabled()
         {
             bool called = false;
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 AllowInsecureProtocol = true,
                 Events = new BasicAuthenticationEvents
@@ -268,8 +308,8 @@ namespace idunno.Authentication.Basic.Test
                     }
                 }
             });
-
             var transaction = await SendAsync(server, "http://example.com/", "username", "password");
+
             Assert.True(called);
         }
 
@@ -278,7 +318,8 @@ namespace idunno.Authentication.Basic.Test
         public async Task ValidateOnValidateCredentialsIsNotCalledWhenTheAuthorizationHeaderHasNoCredentials()
         {
             bool called = false;
-            var server = CreateServer(new BasicAuthenticationOptions
+
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Events = new BasicAuthenticationEvents
                 {
@@ -289,8 +330,8 @@ namespace idunno.Authentication.Basic.Test
                     }
                 }
             });
-
             var transaction = await SendAsyncWithHeaderValue(server, "https://example.com/", "");
+
             Assert.False(called);
         }
 
@@ -300,9 +341,9 @@ namespace idunno.Authentication.Basic.Test
             const string exceptionMessage = "Something bad happened.";
 
             bool called = false;
-            string actualExceptionMessage = null;
+            string actualExceptionMessage = string.Empty;
 
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Events = new BasicAuthenticationEvents
                 {
@@ -313,14 +354,20 @@ namespace idunno.Authentication.Basic.Test
                     OnAuthenticationFailed = context =>
                     {
                         called = true;
-                        actualExceptionMessage = context.Exception.Message;
-                        context.Fail(context.Exception.Message);
+
+                        if (context.Exception is not null)
+                        {
+                            actualExceptionMessage = context.Exception.Message;
+                        }
+
+                        context.Fail(actualExceptionMessage);
                         return Task.CompletedTask;
                     }
                 }
             });
 
             var transaction = await SendAsync(server, "http://example.com/", "username", "password");
+
             Assert.True(called);
             Assert.Equal(exceptionMessage, actualExceptionMessage);
         }
@@ -328,7 +375,7 @@ namespace idunno.Authentication.Basic.Test
         [Fact]
         public async Task ValidateAuthenticationFailsIfOnValidateCredentialsDoesNothing()
         {
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Events = new BasicAuthenticationEvents
                 {
@@ -340,13 +387,14 @@ namespace idunno.Authentication.Basic.Test
             });
 
             var transaction = await SendAsync(server, "https://example.com/challenge", "username", "password");
+
             Assert.Equal(HttpStatusCode.Unauthorized, transaction.Response.StatusCode);
         }
 
         [Fact]
         public async Task ValidateAuthenticationFailsIfOnValidateCredentialsFails()
         {
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Events = new BasicAuthenticationEvents
                 {
@@ -359,28 +407,32 @@ namespace idunno.Authentication.Basic.Test
             });
 
             var transaction = await SendAsync(server, "https://example.com/challenge", "username", "password");
+
             Assert.Equal(HttpStatusCode.Unauthorized, transaction.Response.StatusCode);
         }
 
         [Fact]
         public async Task ValidateAuthenticationFailsWhenAnInvalidUTF8AuthenticationHeaderIsSent()
         {
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
             });
 
             var transaction = await SendAsyncWithRawHeaderValue(server, "https://example.com/challenge", "%%%%%");
+
             Assert.Equal(HttpStatusCode.Unauthorized, transaction.Response.StatusCode);
         }
 
         [Fact]
         public async Task ValidateSuppressionOfWWWAuthenticationHeader()
         {
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 SuppressWWWAuthenticateHeader = true
             });
+
             var response = await server.CreateClient().GetAsync("https://example.com/challenge");
+
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             Assert.Empty(response.Headers.WwwAuthenticate);
         }
@@ -388,31 +440,36 @@ namespace idunno.Authentication.Basic.Test
         [Fact]
         public async Task ValidateAuthenticationHeaderWithOnlySchemeReturnsUnauthorized()
         {
-            var server = CreateServer(new BasicAuthenticationOptions());
+            using var server = await CreateServer(new BasicAuthenticationOptions());
 
             var transaction = await SendAsyncWithRawHeaderValue(server, "https://example.com/challenge", " ");
+
             Assert.Equal(HttpStatusCode.Unauthorized, transaction.Response.StatusCode);
         }
 
         [Fact]
         public async Task CredentialsWithoutColonDelimiterReturnsUnauthorized()
         {
-            string invalidCredentials = "nocolon";
+            string invalidCredentials = "noColon";
             string base64EncodedValue = Convert.ToBase64String(Encoding.UTF8.GetBytes(invalidCredentials.ToCharArray()));
-            var server = CreateServer(new BasicAuthenticationOptions());
+
+            using var server = await CreateServer(new BasicAuthenticationOptions());
 
             var transaction = await SendAsyncWithRawHeaderValue(server, "https://example.com/challenge", base64EncodedValue);
+
             Assert.Equal(HttpStatusCode.Unauthorized, transaction.Response.StatusCode);
         }
 
         [Fact]
         public async Task InvalidUtf8InAuthorizationHeaderReturnsUnauthorized()
         {
-            byte[] invalidUtf8 = { 0xC3, 0x28 };
+            byte[] invalidUtf8 = [0xC3, 0x28];
             string base64EncodedValue = Convert.ToBase64String(invalidUtf8);
-            var server = CreateServer(new BasicAuthenticationOptions());
+
+            using var server = await CreateServer(new BasicAuthenticationOptions());
 
             var transaction = await SendAsyncWithRawHeaderValue(server, "https://example.com/challenge", base64EncodedValue);
+
             Assert.Equal(HttpStatusCode.Unauthorized, transaction.Response.StatusCode);
         }
 
@@ -421,12 +478,14 @@ namespace idunno.Authentication.Basic.Test
         {
             const string Expected = "username";
 
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Events = new BasicAuthenticationEvents
                 {
                     OnValidateCredentials = context =>
                     {
+                        ArgumentNullException.ThrowIfNull(context.Username);
+
                         var claims = new[]
                             {
                                 new Claim(
@@ -444,9 +503,12 @@ namespace idunno.Authentication.Basic.Test
             });
 
             var transaction = await SendAsync(server, "https://example.com/whoami", Expected, "password");
+
             Assert.Equal(HttpStatusCode.OK, transaction.Response.StatusCode);
             Assert.NotNull(transaction.ResponseElement);
-            var actual = transaction.ResponseElement.Elements("claim").Where(claim => claim.Attribute("Type").Value == ClaimTypes.Name);
+
+            var actual = transaction.ResponseElement.Elements("claim").Where(claim => claim.Attribute("Type")!.Value == ClaimTypes.Name);
+
             Assert.Single(actual);
             Assert.Equal(Expected, actual.First().Value);
             Assert.Single(transaction.ResponseElement.Elements("claim"));
@@ -457,10 +519,10 @@ namespace idunno.Authentication.Basic.Test
         {
             const string ExceptedExceptionMessage = "oops";
 
-            Exception exceptionRaised = null;
+            Exception? exceptionRaised = null;
             bool visited = false;
 
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 Events = new BasicAuthenticationEvents
                 {
@@ -472,7 +534,14 @@ namespace idunno.Authentication.Basic.Test
                     {
                         visited = true;
                         exceptionRaised = context.Exception;
-                        context.Fail(exceptionRaised);
+                        if (exceptionRaised is not null)
+                        {
+                            context.Fail(exceptionRaised);
+                        }
+                        else
+                        {
+                            context.Fail("fail");
+                        }
                         return Task.CompletedTask;
                     }
                 }
@@ -488,7 +557,7 @@ namespace idunno.Authentication.Basic.Test
         [Fact]
         public async Task ValidateAuthenticationFailsWhenUsingUtf8DecodingAndPasswordContainsSectionSign()
         {
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 EncodingPreference = EncodingPreference.Utf8
             });
@@ -502,13 +571,16 @@ namespace idunno.Authentication.Basic.Test
         {
             const string Expected = "UserName";
 
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 EncodingPreference = EncodingPreference.Latin1,
                 Events = new BasicAuthenticationEvents
                 {
                     OnValidateCredentials = context =>
                     {
+                        ArgumentNullException.ThrowIfNull(context);
+                        ArgumentNullException.ThrowIfNull(context.Username);
+
                         var claims = new[]
                             {
                                 new Claim(
@@ -523,16 +595,19 @@ namespace idunno.Authentication.Basic.Test
                         return Task.CompletedTask;
                     }
                 }
-            }) ;
+            });
 
             string credentials = $"{Expected}:pa§§word";
             byte[] credentialsAsBytes = Encoding.GetEncoding("ISO-8859-1").GetBytes(credentials.ToCharArray());
             var encodedCredentials = Convert.ToBase64String(credentialsAsBytes);
 
             var transaction = await SendAsyncWithRawHeaderValue(server, "https://example.com/whoami", encodedCredentials);
+
             Assert.Equal(HttpStatusCode.OK, transaction.Response.StatusCode);
             Assert.NotNull(transaction.ResponseElement);
-            var actual = transaction.ResponseElement.Elements("claim").Where(claim => claim.Attribute("Type").Value == ClaimTypes.Name);
+
+            var actual = transaction.ResponseElement.Elements("claim").Where(claim => claim.Attribute("Type")!.Value == ClaimTypes.Name);
+
             Assert.Single(actual);
             Assert.Equal(Expected, actual.First().Value);
             Assert.Single(transaction.ResponseElement.Elements("claim"));
@@ -543,13 +618,16 @@ namespace idunno.Authentication.Basic.Test
         {
             const string Expected = "User§Name";
 
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 EncodingPreference = EncodingPreference.Latin1,
                 Events = new BasicAuthenticationEvents
                 {
                     OnValidateCredentials = context =>
                     {
+                        ArgumentNullException.ThrowIfNull(context);
+                        ArgumentNullException.ThrowIfNull(context.Username);
+
                         var claims = new[]
                             {
                                 new Claim(
@@ -571,9 +649,12 @@ namespace idunno.Authentication.Basic.Test
             var encodedCredentials = Convert.ToBase64String(credentialsAsBytes);
 
             var transaction = await SendAsyncWithRawHeaderValue(server, "https://example.com/whoami", encodedCredentials);
+
             Assert.Equal(HttpStatusCode.OK, transaction.Response.StatusCode);
             Assert.NotNull(transaction.ResponseElement);
-            var actual = transaction.ResponseElement.Elements("claim").Where(claim => claim.Attribute("Type").Value == ClaimTypes.Name);
+
+            var actual = transaction.ResponseElement.Elements("claim").Where(claim => claim.Attribute("Type")!.Value == ClaimTypes.Name);
+
             Assert.Single(actual);
             Assert.Equal(Expected, actual.First().Value);
             Assert.Single(transaction.ResponseElement.Elements("claim"));
@@ -584,13 +665,16 @@ namespace idunno.Authentication.Basic.Test
         {
             const string Expected = "User§Name";
 
-            var server = CreateServer(new BasicAuthenticationOptions
+            using var server = await CreateServer(new BasicAuthenticationOptions
             {
                 EncodingPreference = EncodingPreference.PreferUtf8,
                 Events = new BasicAuthenticationEvents
                 {
                     OnValidateCredentials = context =>
                     {
+                        ArgumentNullException.ThrowIfNull(context);
+                        ArgumentNullException.ThrowIfNull(context.Username);
+
                         var claims = new[]
                             {
                                 new Claim(
@@ -612,77 +696,174 @@ namespace idunno.Authentication.Basic.Test
             var encodedCredentials = Convert.ToBase64String(credentialsAsBytes);
 
             var transaction = await SendAsyncWithRawHeaderValue(server, "https://example.com/whoami", encodedCredentials);
+
             Assert.Equal(HttpStatusCode.OK, transaction.Response.StatusCode);
             Assert.NotNull(transaction.ResponseElement);
-            var actual = transaction.ResponseElement.Elements("claim").Where(claim => claim.Attribute("Type").Value == ClaimTypes.Name);
+
+            var actual = transaction.ResponseElement.Elements("claim").Where(claim => claim.Attribute("Type")!.Value == ClaimTypes.Name);
+
             Assert.Single(actual);
             Assert.Equal(Expected, actual.First().Value);
             Assert.Single(transaction.ResponseElement.Elements("claim"));
         }
 
-        private static TestServer CreateServer(
-            BasicAuthenticationOptions configureOptions,
-            Func<HttpContext, Func<Task>, Task> handler = null,
-            Uri baseAddress = null)
+#if NET10_0_OR_GREATER
+        private static async Task<TestServer> CreateServer(BasicAuthenticationOptions configureOptions, Func<HttpContext, Func<Task>?, Task>? handler = null, Uri? baseAddress = null)
         {
-            var builder = new WebHostBuilder()
-                .Configure(app =>
+            var host = new HostBuilder()
+                .ConfigureWebHost(builder =>
                 {
-                    if (handler != null)
-                    {
-                        app.Use(handler);
-                    }
-
-                    app.UseAuthentication();
-
-                    app.Use(async (context, next) =>
-                    {
-                        var request = context.Request;
-                        var response = context.Response;
-
-                        if (request.Path == new PathString("/"))
+                    builder.UseTestServer()
+                        .Configure(app =>
                         {
-                            response.StatusCode = (int)HttpStatusCode.OK;
-                        }
-                        else if (request.Path == new PathString("/unauthorized"))
-                        {
-                            response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                        }
-                        else if (request.Path == new PathString("/forbidden"))
-                        {
-                            await context.ForbidAsync(BasicAuthenticationDefaults.AuthenticationScheme);
-                        }
-                        else if (request.Path == new PathString("/challenge"))
-                        {
-                            await context.ChallengeAsync(BasicAuthenticationDefaults.AuthenticationScheme);
-                        }
-                        else if (request.Path == new PathString("/whoami"))
-                        {
-
-                            var authenticationResult = await context.AuthenticateAsync();
-                            if (authenticationResult.Succeeded)
+                            if (handler != null)
                             {
-                                response.StatusCode = (int)HttpStatusCode.OK;
-                                response.ContentType = "text/xml";
+                                app.Use(handler);
+                            }
 
-                                await response.WriteAsync("<claims>");
-                                foreach (Claim claim in context.User.Claims)
+                            app.UseAuthentication();
+
+                            app.Use(async (context, next) =>
+                            {
+                                var request = context.Request;
+                                var response = context.Response;
+
+                                if (request.Path == new PathString("/"))
                                 {
-                                    await response.WriteAsync($"<claim Type=\"{claim.Type}\" Issuer=\"{claim.Issuer}\">{claim.Value}</claim>");
+                                    response.StatusCode = (int)HttpStatusCode.OK;
                                 }
-                                await response.WriteAsync("</claims>");
-                            }
-                            else
+                                else if (request.Path == new PathString("/unauthorized"))
+                                {
+                                    response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                                }
+                                else if (request.Path == new PathString("/forbidden"))
+                                {
+                                    await context.ForbidAsync(BasicAuthenticationDefaults.AuthenticationScheme);
+                                }
+                                else if (request.Path == new PathString("/challenge"))
+                                {
+                                    await context.ChallengeAsync(BasicAuthenticationDefaults.AuthenticationScheme);
+                                }
+                                else if (request.Path == new PathString("/whoami"))
+                                {
+
+                                    var authenticationResult = await context.AuthenticateAsync();
+                                    if (authenticationResult.Succeeded)
+                                    {
+                                        response.StatusCode = (int)HttpStatusCode.OK;
+                                        response.ContentType = "text/xml";
+
+                                        await response.WriteAsync("<claims>");
+                                        foreach (Claim claim in context.User.Claims)
+                                        {
+                                            await response.WriteAsync($"<claim Type=\"{claim.Type}\" Issuer=\"{claim.Issuer}\">{claim.Value}</claim>");
+                                        }
+                                        await response.WriteAsync("</claims>");
+                                    }
+                                    else
+                                    {
+                                        await context.ChallengeAsync();
+                                    }
+                                }
+                                else
+                                {
+                                    await next(context);
+                                }
+                            });
+
+                        });
+
+                    builder.ConfigureServices(services =>
+                    {
+                        if (configureOptions != null)
+                        {
+                            services.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme).AddBasic(options =>
                             {
-                                await context.ChallengeAsync();
-                            }
+                                options.Events = configureOptions.Events;
+                                options.Realm = configureOptions.Realm;
+                                options.SuppressWWWAuthenticateHeader = configureOptions.SuppressWWWAuthenticateHeader;
+                                options.AdvertiseEncodingPreference = configureOptions.AdvertiseEncodingPreference;
+                                options.EncodingPreference = configureOptions.EncodingPreference;
+                            });
                         }
                         else
                         {
-                            await next();
+                            services.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme).AddBasic();
                         }
                     });
                 })
+                .Build();
+
+            await host.StartAsync();
+            var testServer = host.GetTestServer();
+
+            if (baseAddress is not null)
+            {
+                testServer.BaseAddress = baseAddress;
+            }
+
+            return testServer;
+        }
+#else
+        private static async Task<TestServer> CreateServer(BasicAuthenticationOptions configureOptions, Func<HttpContext, Func<Task>?, Task>? handler = null, Uri? baseAddress = null)
+        {
+            var builder = new WebHostBuilder().Configure(app =>
+            {
+                if (handler != null)
+                {
+                    app.Use(handler);
+                }
+
+                app.UseAuthentication();
+
+                app.Use(async (context, next) =>
+                {
+                    var request = context.Request;
+                    var response = context.Response;
+
+                    if (request.Path == new PathString("/"))
+                    {
+                        response.StatusCode = (int)HttpStatusCode.OK;
+                    }
+                    else if (request.Path == new PathString("/unauthorized"))
+                    {
+                        response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    }
+                    else if (request.Path == new PathString("/forbidden"))
+                    {
+                        await context.ForbidAsync(BasicAuthenticationDefaults.AuthenticationScheme);
+                    }
+                    else if (request.Path == new PathString("/challenge"))
+                    {
+                        await context.ChallengeAsync(BasicAuthenticationDefaults.AuthenticationScheme);
+                    }
+                    else if (request.Path == new PathString("/whoami"))
+                    {
+
+                        var authenticationResult = await context.AuthenticateAsync();
+                        if (authenticationResult.Succeeded)
+                        {
+                            response.StatusCode = (int)HttpStatusCode.OK;
+                            response.ContentType = "text/xml";
+
+                            await response.WriteAsync("<claims>");
+                            foreach (Claim claim in context.User.Claims)
+                            {
+                                await response.WriteAsync($"<claim Type=\"{claim.Type}\" Issuer=\"{claim.Issuer}\">{claim.Value}</claim>");
+                            }
+                            await response.WriteAsync("</claims>");
+                        }
+                        else
+                        {
+                            await context.ChallengeAsync();
+                        }
+                    }
+                    else
+                    {
+                        await next();
+                    }
+                });
+            })
             .ConfigureServices(services =>
             {
                 if (configureOptions != null)
@@ -693,7 +874,7 @@ namespace idunno.Authentication.Basic.Test
                         options.Realm = configureOptions.Realm;
                         options.SuppressWWWAuthenticateHeader = configureOptions.SuppressWWWAuthenticateHeader;
                         options.AdvertiseEncodingPreference = configureOptions.AdvertiseEncodingPreference;
-                        options.EncodingPreference= configureOptions.EncodingPreference;
+                        options.EncodingPreference = configureOptions.EncodingPreference;
                     });
                 }
                 else
@@ -702,15 +883,18 @@ namespace idunno.Authentication.Basic.Test
                 }
             });
 
-            var server = new TestServer(builder)
+            var testServer = new TestServer(builder);
+
+            if (baseAddress is not null)
             {
-                BaseAddress = baseAddress
-            };
+                testServer.BaseAddress = baseAddress;
+            }
 
-            return server;
+            return testServer;
         }
+#endif
 
-        private static async Task<Transaction> SendAsync(TestServer server, string uri, string userName = null, string password = null, string scheme = "Basic")
+        private static async Task<Transaction> SendAsync(TestServer server, string uri, string? userName = null, string? password = null, string scheme = "Basic")
         {
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             if (!string.IsNullOrEmpty(userName))
@@ -720,11 +904,7 @@ namespace idunno.Authentication.Basic.Test
                 var encodedCredentials = Convert.ToBase64String(credentialsAsBytes);
                 request.Headers.Add(HeaderNames.Authorization, $"{scheme} {encodedCredentials}");
             }
-            var transaction = new Transaction
-            {
-                Request = request,
-                Response = await server.CreateClient().SendAsync(request),
-            };
+            var transaction = new Transaction(request, await server.CreateClient().SendAsync(request));
             transaction.ResponseText = await transaction.Response.Content.ReadAsStringAsync();
 
             if (transaction.Response.Content != null &&
@@ -741,13 +921,9 @@ namespace idunno.Authentication.Basic.Test
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             byte[] credentialsAsBytes = Encoding.UTF8.GetBytes(authorizationHeaderValue.ToCharArray());
             var encodedCredentials = Convert.ToBase64String(credentialsAsBytes);
-            request.Headers.Add(HeaderNames.Authorization, scheme+ " " + encodedCredentials);
+            request.Headers.Add(HeaderNames.Authorization, scheme + " " + encodedCredentials);
 
-            var transaction = new Transaction
-            {
-                Request = request,
-                Response = await server.CreateClient().SendAsync(request),
-            };
+            var transaction = new Transaction(request, await server.CreateClient().SendAsync(request));
             transaction.ResponseText = await transaction.Response.Content.ReadAsStringAsync();
 
             if (transaction.Response.Content != null &&
@@ -769,11 +945,7 @@ namespace idunno.Authentication.Basic.Test
                 throw new ArgumentException("Could not add authorization header.", nameof(authorizationHeaderValue));
             }
 
-            var transaction = new Transaction
-            {
-                Request = request,
-                Response = await server.CreateClient().SendAsync(request),
-            };
+            var transaction = new Transaction(request, await server.CreateClient().SendAsync(request));
             transaction.ResponseText = await transaction.Response.Content.ReadAsStringAsync();
 
             if (transaction.Response.Content != null &&
@@ -788,10 +960,20 @@ namespace idunno.Authentication.Basic.Test
 
         private class Transaction
         {
+            [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Multitargeting")]
+            public Transaction(HttpRequestMessage request, HttpResponseMessage response)
+            {
+                Request = request;
+                Response = response;
+            }
+
             public HttpRequestMessage Request { get; set; }
+
             public HttpResponseMessage Response { get; set; }
-            public string ResponseText { get; set; }
-            public XElement ResponseElement { get; set; }
+
+            public string? ResponseText { get; set; }
+
+            public XElement? ResponseElement { get; set; }
         }
     }
 }

@@ -18,15 +18,8 @@ namespace idunno.Authentication.SharedKey
         /// <returns>The hash value for the <paramref name="request"/> body.</returns>
         public static async Task<byte[]> CalculateBodyMd5(HttpRequestMessage request)
         {
-            if (request == null)
-            {
-                throw new ArgumentNullException(nameof(request));
-            }
-
-            if (request.Content == null)
-            {
-                throw new ArgumentException("Request has no content to calculate MD5 for.");
-            }
+            ArgumentNullException.ThrowIfNull(request);
+            ArgumentNullException.ThrowIfNull(request.Content);
 
             await request.Content.LoadIntoBufferAsync().ConfigureAwait(false);
             using var bodyStream = new MemoryStream();
@@ -34,7 +27,7 @@ namespace idunno.Authentication.SharedKey
             bodyStream.Seek(0, SeekOrigin.Begin);
             if (bodyStream.Length <= 0)
             {
-                return Array.Empty<byte>();
+                return [];
             }
 
             using var md5 = MD5.Create();

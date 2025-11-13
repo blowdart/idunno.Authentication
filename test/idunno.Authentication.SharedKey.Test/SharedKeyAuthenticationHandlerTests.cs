@@ -2,19 +2,13 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.ComponentModel;
-using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
-using System.Xml;
 using System.Xml.Linq;
 
 using Microsoft.AspNetCore.Authentication;
@@ -25,7 +19,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
-using Xunit;
 
 namespace idunno.Authentication.SharedKey.Test
 {
@@ -74,7 +67,7 @@ namespace idunno.Authentication.SharedKey.Test
             using var host = await CreateHost(o => { });
             using var server = host.GetTestServer();
             using var httpClient = server.CreateClient();
-            httpClient.DefaultRequestHeaders.Add(AuthenticationHeaderName, (string)null);
+            httpClient.DefaultRequestHeaders.Add(AuthenticationHeaderName, value: null);
             var response = await httpClient.GetAsync("https://localhost/");
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
@@ -93,21 +86,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithUnknownKeyIdReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
             });
@@ -123,21 +116,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithKnownKeyIdButInvalidBase64SignatureReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return new byte[] {0xDE, 0xAD, 0xBE, 0xEF};
+                        return [0xDE, 0xAD, 0xBE, 0xEF];
                     }
                 };
             });
@@ -151,23 +144,23 @@ namespace idunno.Authentication.SharedKey.Test
         }
 
         [Fact]
-        public async Task AuthorizedRequestWithKnownKeyIdButNoSeperatorReturnsUnauthorized()
+        public async Task AuthorizedRequestWithKnownKeyIdButNoSeparatorReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
             });
@@ -183,21 +176,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithKnownKeyIdAndMatchingKeyAndNoBodyReturnsOk()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.Events = new SharedKeyAuthenticationEvents
@@ -235,23 +228,23 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithKnownKeyIdAndMatchingKeyAndBodyReturnsOk()
         {
-            const string knownKeyId = "keyid";
-            const string keyClaimName = "keyIdClaim";
+            const string knownKeyId = "keyId";
+            const string keyClaimName = "KeyIdClaim";
 
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.Events = new SharedKeyAuthenticationEvents
@@ -294,7 +287,7 @@ namespace idunno.Authentication.SharedKey.Test
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            XElement responseAsXml = null;
+            XElement? responseAsXml = null;
             if (response.Content != null &&
                 response.Content.Headers.ContentType != null &&
                 response.Content.Headers.ContentType.MediaType == "text/xml")
@@ -304,7 +297,7 @@ namespace idunno.Authentication.SharedKey.Test
             }
 
             Assert.NotNull(responseAsXml);
-            var claimValue = responseAsXml.Elements("claim").Where(claim => claim.Attribute("Type").Value == keyClaimName);
+            var claimValue = responseAsXml.Elements("claim").Where(claim => claim.Attribute("Type")!.Value == keyClaimName);
             Assert.Single(claimValue);
             Assert.Equal(knownKeyId, claimValue.First().Value);
         }
@@ -312,21 +305,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithKnownKeyIdAndMatchingKeyAndChangedBodyReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.Events = new SharedKeyAuthenticationEvents
@@ -354,6 +347,7 @@ namespace idunno.Authentication.SharedKey.Test
 
             var mutatingHttpMessageHandler = new RequestMutatingHandler(async (request) =>
                 {
+                    ArgumentNullException.ThrowIfNull(request.Content);
                     _ = await request.Content.ReadAsStringAsync();
                     request.Content = new StringContent("newRequestBody");
                 })
@@ -384,21 +378,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithNullDateHeaderReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.Events = new SharedKeyAuthenticationEvents
@@ -455,21 +449,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithInvalidDateHeaderReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.Events = new SharedKeyAuthenticationEvents
@@ -527,21 +521,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWhichIsTooOldReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
@@ -600,21 +594,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWhichIsTooFarInTheFutureReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
@@ -674,21 +668,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithContentAndNoMd5ReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
@@ -717,6 +711,7 @@ namespace idunno.Authentication.SharedKey.Test
 
             var mutatingHttpMessageHandler = new RequestMutatingHandler((request) =>
             {
+                ArgumentNullException.ThrowIfNull(request.Content);
                 request.Content.Headers.Remove(HeaderNames.ContentMD5);
             })
             {
@@ -746,21 +741,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithContentAndMismatchedMd5ReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
@@ -789,6 +784,10 @@ namespace idunno.Authentication.SharedKey.Test
 
             var mutatingHttpMessageHandler = new RequestMutatingHandler(async (request) =>
             {
+                ArgumentNullException.ThrowIfNull(request.Content);
+                ArgumentNullException.ThrowIfNull(request.Content.Headers);
+                ArgumentNullException.ThrowIfNull(request.Content.Headers.ContentMD5);
+
                 await request.Content.ReadAsStringAsync();
                 // If we change the content the MD5 header gets removed, so we need to mutate the MD5 header
                 byte[] mutatedMD5Value = request.Content.Headers.ContentMD5;
@@ -829,21 +828,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithContentAndInvalidBase64Md5ReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
@@ -872,6 +871,8 @@ namespace idunno.Authentication.SharedKey.Test
 
             var mutatingHttpMessageHandler = new RequestMutatingHandler((request) =>
             {
+                ArgumentNullException.ThrowIfNull(request.Content);
+
                 request.Content.Headers.Remove(HeaderNames.ContentMD5);
                 request.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentMD5, "NotBase64");
             })
@@ -907,21 +908,21 @@ namespace idunno.Authentication.SharedKey.Test
         [InlineData("Range", "1-")]
         public async Task MutatingARequestThatAffectsACanonicalizedRequestHeaderReturnsUnauthorized(string headerName, string value)
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
@@ -983,21 +984,21 @@ namespace idunno.Authentication.SharedKey.Test
         [InlineData("Content-Type", "not/valid")]
         public async Task MutatingARequestThatAffectsACanonicalizedContentHeaderReturnsUnauthorized(string headerName, string value)
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.MaximumMessageValidity = new TimeSpan(0, 0, 15, 0);
@@ -1026,6 +1027,8 @@ namespace idunno.Authentication.SharedKey.Test
 
             var mutatingHttpMessageHandler = new RequestMutatingHandler((request) =>
             {
+                ArgumentNullException.ThrowIfNull(request.Content);
+
                 request.Content.Headers.Remove(headerName);
                 request.Content.Headers.TryAddWithoutValidation(headerName, value);
             })
@@ -1056,20 +1059,20 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithUnresolvedKeyIdentifierReturningNullReturnsUnauthorized()
         {
-            const string keyId = "keyid";
+            const string KeyId = "keyId";
             byte[] keyForKeyId = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(keyForKeyId);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
                     return null;
                 };
             });
 
             using var server = host.GetTestServer();
-            var clientHandlerPipeline = new SharedKeyHttpMessageHandler(keyId, keyForKeyId)
+            var clientHandlerPipeline = new SharedKeyHttpMessageHandler(KeyId, keyForKeyId)
             {
                 InnerHandler = server.CreateHandler()
             };
@@ -1082,20 +1085,20 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task AuthorizedRequestWithUnresolvedKeyIdentifierReturningAnEmptyArrayReturnsUnauthorized()
         {
-            const string keyId = "keyid";
+            const string KeyId = "keyId";
             byte[] keyForKeyId = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(keyForKeyId);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    return Array.Empty<byte>();
+                    return [];
                 };
             });
 
             using var server = host.GetTestServer();
-            var clientHandlerPipeline = new SharedKeyHttpMessageHandler(keyId, keyForKeyId)
+            var clientHandlerPipeline = new SharedKeyHttpMessageHandler(KeyId, keyForKeyId)
             {
                 InnerHandler = server.CreateHandler()
             };
@@ -1108,21 +1111,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task InvalidAuthorizationFormatReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] keyForKeyId = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(keyForKeyId);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyId) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyId == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return keyForKeyId;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
             });
@@ -1130,6 +1133,9 @@ namespace idunno.Authentication.SharedKey.Test
             using var server = host.GetTestServer();
             var mutatingHttpMessageHandler = new RequestMutatingHandler((request) =>
             {
+                ArgumentNullException.ThrowIfNull(request.Headers.Authorization);
+                ArgumentNullException.ThrowIfNull(request.Headers.Authorization.Parameter);
+
                 var existingAuthenticationHeaderScheme = request.Headers.Authorization.Scheme;
                 var existingAuthenticationHeaderValue = request.Headers.Authorization.Parameter;
                 request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(existingAuthenticationHeaderScheme,
@@ -1156,21 +1162,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task MissingSignatureReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] keyForKeyId = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(keyForKeyId);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyId) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyId == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return keyForKeyId;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
             });
@@ -1178,10 +1184,12 @@ namespace idunno.Authentication.SharedKey.Test
             using var server = host.GetTestServer();
             var mutatingHttpMessageHandler = new RequestMutatingHandler((request) =>
             {
+                ArgumentNullException.ThrowIfNull(request.Headers.Authorization);
+
                 var existingAuthenticationHeaderScheme = request.Headers.Authorization.Scheme;
                 var existingAuthenticationHeaderValue = request.Headers.Authorization.Parameter;
                 request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(existingAuthenticationHeaderScheme,
-                                                                                                      "keyid:");
+                                                                                                      "KeyId:");
             })
             {
                 InnerHandler = server.CreateHandler()
@@ -1204,21 +1212,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task InvalidBase64InSignatureReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] keyForKeyId = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(keyForKeyId);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyId) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyId == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return keyForKeyId;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
             });
@@ -1226,6 +1234,8 @@ namespace idunno.Authentication.SharedKey.Test
             using var server = host.GetTestServer();
             var mutatingHttpMessageHandler = new RequestMutatingHandler((request) =>
             {
+                ArgumentNullException.ThrowIfNull(request.Headers.Authorization);
+
                 var existingAuthenticationHeaderScheme = request.Headers.Authorization.Scheme;
                 var existingAuthenticationHeaderValue = request.Headers.Authorization.Parameter;
                 request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(existingAuthenticationHeaderScheme,
@@ -1252,21 +1262,21 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task FailureInValidateSharedKeyReturnsUnauthorized()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.Events = new SharedKeyAuthenticationEvents
@@ -1304,22 +1314,22 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task SuccessInValidateSharedKeyReturnsOkAndAttachesPrincipal()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             const string KeyIdClaimName = "keyId";
             byte[] knownKey = new byte[64];
             using var randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
-                    if (keyID == knownKeyId)
+                    if (KeyId == knownKeyId)
                     {
                         return knownKey;
                     }
                     else
                     {
-                        return Array.Empty<byte>();
+                        return [];
                     }
                 };
                 o.Events = new SharedKeyAuthenticationEvents
@@ -1353,13 +1363,17 @@ namespace idunno.Authentication.SharedKey.Test
             var response = await httpClient.GetAsync("https://localhost/");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
+            Assert.NotNull(response.Content);
+            Assert.NotNull(response.Content.Headers);
+            Assert.NotNull(response.Content.Headers.ContentType);
+
             Assert.Equal("text/xml", response.Content.Headers.ContentType.MediaType);
             var responseBody = await response.Content.ReadAsStringAsync();
             Assert.NotNull(responseBody);
 
             var responseElement = XElement.Parse(responseBody);
 
-            var actual = responseElement.Elements("claim").Where(claim => claim.Attribute("Type").Value == KeyIdClaimName);
+            var actual = responseElement.Elements("claim").Where(claim => claim.Attribute("Type")!.Value == KeyIdClaimName);
             Assert.Single(actual);
             Assert.Equal(knownKeyId, actual.First().Value);
             Assert.Single(responseElement.Elements("claim"));
@@ -1368,12 +1382,12 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task ExceptionInKeyResolverUnauthorizedAndDivertsThroughAuthenticationFailed()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             const string KeyIdClaimName = "keyId";
             const string ExceptionMessage = "KeyResolutionException";
 
             bool authenticationFailedCalled = false;
-            Exception exceptionRaised = null;
+            Exception? exceptionRaised = null;
 
 
             byte[] knownKey = new byte[64];
@@ -1381,7 +1395,7 @@ namespace idunno.Authentication.SharedKey.Test
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
                     throw new Exception(ExceptionMessage);
                 };
@@ -1407,7 +1421,15 @@ namespace idunno.Authentication.SharedKey.Test
                     {
                         authenticationFailedCalled = true;
                         exceptionRaised = context.Exception;
-                        context.Fail(exceptionRaised);
+
+                        if (exceptionRaised is not null)
+                        {
+                            context.Fail(exceptionRaised);
+                        }
+                        else
+                        {
+                            context.Fail("Unknown error");
+                        }
                         return Task.CompletedTask;
 
                     }
@@ -1431,11 +1453,11 @@ namespace idunno.Authentication.SharedKey.Test
         [Fact]
         public async Task ExceptionInOnValidateSharedKeyReturnsUnauthorizedAndDivertsThroughAuthenticationFailed()
         {
-            const string knownKeyId = "keyid";
+            const string knownKeyId = "keyId";
             const string ExceptionMessage = "ValidateKeyException";
 
             bool authenticationFailedCalled = false;
-            Exception exceptionRaised = null;
+            Exception? exceptionRaised = null;
 
 
             byte[] knownKey = new byte[64];
@@ -1443,16 +1465,16 @@ namespace idunno.Authentication.SharedKey.Test
             randomNumberGenerator.GetBytes(knownKey);
 
             using var host = await CreateHost(o => {
-                o.KeyResolver = (keyID) =>
+                o.KeyResolver = (KeyId) =>
                 {
                     {
-                        if (keyID == knownKeyId)
+                        if (KeyId == knownKeyId)
                         {
                             return knownKey;
                         }
                         else
                         {
-                            return Array.Empty<byte>();
+                            return [];
                         }
                     };
                 };
@@ -1466,7 +1488,15 @@ namespace idunno.Authentication.SharedKey.Test
                     {
                         authenticationFailedCalled = true;
                         exceptionRaised = context.Exception;
-                        context.Fail(exceptionRaised);
+
+                        if (exceptionRaised is not null)
+                        {
+                            context.Fail(exceptionRaised);
+                        }
+                        else
+                        {
+                            context.Fail("Unknown error");
+                        }
                         return Task.CompletedTask;
 
                     }
@@ -1489,7 +1519,7 @@ namespace idunno.Authentication.SharedKey.Test
 
         private static async Task<IHost> CreateHost(
             Action<SharedKeyAuthenticationOptions> options,
-            Uri baseAddress = null)
+            Uri? baseAddress = null)
         {
             var host = new HostBuilder()
                  .ConfigureWebHost(builder =>
@@ -1540,26 +1570,23 @@ namespace idunno.Authentication.SharedKey.Test
             await host.StartAsync();
 
             var server = host.GetTestServer();
-            server.BaseAddress = baseAddress;
-            return host;
+            if (baseAddress is not null)
+            {
+                server.BaseAddress = baseAddress;
+            }
 
+            return host;
         }
 
-        public class RequestMutatingHandler : DelegatingHandler
+        public class RequestMutatingHandler(Action<HttpRequestMessage> mutate) : DelegatingHandler
         {
-            public RequestMutatingHandler(Action<HttpRequestMessage> mutate)
-            {
-                Mutate = mutate;
-            }
-
             protected override Task<HttpResponseMessage> SendAsync(
-                HttpRequestMessage request, CancellationToken cancellationToken)
+                HttpRequestMessage request,
+                CancellationToken cancellationToken)
             {
-                Mutate(request);
+                mutate(request);
                 return base.SendAsync(request, cancellationToken);
             }
-
-            private Action<HttpRequestMessage> Mutate { get; set; }
         }
     }
 }

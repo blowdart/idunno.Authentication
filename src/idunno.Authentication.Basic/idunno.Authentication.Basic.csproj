@@ -1,36 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<Description>ASP.NET Core middleware that enables an application to support basic authentication.</Description>
-		<PackageTags>aspnetcore;authentication;security;basicauth</PackageTags>
-		<Configurations>Debug;Release;CodeQL</Configurations>
-	</PropertyGroup>
+    <PropertyGroup>
+        <Description>ASP.NET Core middleware that enables an application to support basic authentication.</Description>
+        <PackageTags>aspnetcore;authentication;security;basicauth</PackageTags>
+        <Configurations>Debug;Release;CodeQL</Configurations>
+    </PropertyGroup>
 
-	<Choose>
-		<When Condition="'$(Configuration)' != 'CodeQL'">
-			<PropertyGroup>
-				<TargetFrameworks>netstandard2.0;net8.0;net9.0;net10.0</TargetFrameworks>
-			</PropertyGroup>
-		</When>
-		<Otherwise>
-			<PropertyGroup>
-				<!-- CodeQL doesn't do .NET 10 yet -->
-				<TargetFramework>net9.0</TargetFramework>
-			</PropertyGroup>
-		</Otherwise>
-	</Choose>
+    <Choose>
+        <When Condition="'$(Configuration)' != 'CodeQL'">
+            <PropertyGroup>
+                <TargetFrameworks>netstandard2.0;net6.0;net8.0;net9.0;net10.0</TargetFrameworks>
+            </PropertyGroup>
+        </When>
+        <Otherwise>
+            <PropertyGroup>
+                <!-- CodeQL doesn't do .NET 10 yet -->
+                <TargetFramework>net9.0</TargetFramework>
+            </PropertyGroup>
+        </Otherwise>
+    </Choose>
 
+    <PropertyGroup>
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    </PropertyGroup>
 
-	<PropertyGroup>
-		<CheckEolTargetFramework>false</CheckEolTargetFramework>
-	</PropertyGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.3.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.1.1" />
+    </ItemGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-		<PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.3.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
-		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.1.1" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-	</ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
 </Project>

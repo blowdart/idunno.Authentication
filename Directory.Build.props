@@ -1,19 +1,28 @@
 <Project>
-  <PropertyGroup>
-    <Product>idunno.org Authentication</Product>
-    <MaintainerEmail>github.com@idunno.org</MaintainerEmail>
+    <PropertyGroup>
+        <Product>idunno.org Authentication</Product>
+        <MaintainerEmail>github.com@idunno.org</MaintainerEmail>
 
-    <RepositoryUrl>https://github.com/blowdart/idunno.Authentication</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
+        <RepositoryUrl>https://github.com/blowdart/idunno.Authentication</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
 
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)key.snk</AssemblyOriginatorKeyFile>
-    <SignAssembly>true</SignAssembly>
-    <PublicSign Condition="'$(OS)' != 'Windows_NT'">true</PublicSign>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)key.snk</AssemblyOriginatorKeyFile>
+        <SignAssembly>true</SignAssembly>
+        <PublicSign Condition="'$(OS)' != 'Windows_NT'">true</PublicSign>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
-    <Company>idunno.org</Company>
-    <Authors>Barry Dorrans</Authors>
-    <Copyright>Barry Dorrans</Copyright>
-  </PropertyGroup>
+        <Company>idunno.org</Company>
+        <Authors>Barry Dorrans</Authors>
+        <Copyright>Barry Dorrans</Copyright>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 </Project>

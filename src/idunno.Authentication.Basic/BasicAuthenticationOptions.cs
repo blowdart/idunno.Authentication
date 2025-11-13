@@ -1,7 +1,10 @@
 ﻿// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
+#if NETSTANDARD2_0
+#nullable enable
+#endif
+
 using Microsoft.AspNetCore.Authentication;
 
 namespace idunno.Authentication.Basic
@@ -14,7 +17,7 @@ namespace idunno.Authentication.Basic
     /// </summary>
     public class BasicAuthenticationOptions : AuthenticationSchemeOptions
     {
-        private string _realm;
+        private string? _realm;
 
         /// <summary>
         /// Create an instance of the options initialized with the default values
@@ -33,7 +36,7 @@ namespace idunno.Authentication.Basic
         /// set of protection spaces, each with its own authentication scheme and/or
         /// authorization database.
         /// </remarks>
-        public string Realm
+        public string? Realm
         {
             get
             {
@@ -42,7 +45,9 @@ namespace idunno.Authentication.Basic
 
             set
             {
-                if (!string.IsNullOrEmpty(value) && !IsAscii(value))
+                if (value is not null &&
+                    !string.IsNullOrEmpty(value) &&
+                    !IsAscii(value))
                 {
                     throw new ArgumentException("Realm must be US ASCII");
                 }
@@ -58,7 +63,7 @@ namespace idunno.Authentication.Basic
         /// <remarks>
         /// The authentication scheme controls the browser UI and allows the browser to
         /// authenticate in the correct manner, popping up a UI to allow for user name and password.
-        /// Some users may want to suppress this behaviour for JavaScript XMLHttpRequest requests.
+        /// Some users may want to suppress this behavior for JavaScript XMLHttpRequest requests.
         /// Setting this flag to true suppresses the WWW-Authenticate header and thus the browser login prompt, just sending a
         /// 401 status code that you must react to yourself in your client code.
         /// </remarks>
@@ -94,14 +99,12 @@ namespace idunno.Authentication.Basic
         /// The application may implement the interface fully, or it may create an instance of BasicAuthenticationEvents
         /// and assign delegates only to the events it wants to process.
         /// </summary>
-        public new BasicAuthenticationEvents Events
-
+        public new BasicAuthenticationEvents? Events
         {
-            get { return (BasicAuthenticationEvents)base.Events; }
+            get { return (BasicAuthenticationEvents?)base.Events; }
 
             set { base.Events = value; }
         }
-
 
         private static bool IsAscii(string input)
         {

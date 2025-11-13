@@ -1,42 +1,44 @@
 <Project>
-  <Import Project="..\Directory.Build.props" />
+    <Import Project="..\Directory.Build.props" />
 
-  <PropertyGroup>
-    <CIBuild Condition="'$(CIBuild)' == ''">false</CIBuild>
-  </PropertyGroup>
+    <PropertyGroup>
+        <PackageProjectUrl>https://github.com/blowdart/idunno.Authentication</PackageProjectUrl>
+        <!-- The SPDX name for the source license. See https://spdx.org/licenses/. -->
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 
-  <PropertyGroup>
-    <PackageProjectUrl>https://github.com/blowdart/idunno.Authentication</PackageProjectUrl>
-    <!-- The SPDX name for the source license. See https://spdx.org/licenses/. -->
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageIcon>icon.png</PackageIcon>
+        <PackageIconFullPath>$(MSBuildThisFileDirectory)icon.png</PackageIconFullPath>
+        <PackageReadMeFile>readme.md</PackageReadMeFile>
+        <PackageReadMeFullPath>$(MSBuildProjectDirectory)/readme.md</PackageReadMeFullPath>
+        <NuspecBasePath>$(MSBuildProjectDirectory)</NuspecBasePath>
+    </PropertyGroup>
 
-    <PackageIcon>icon.png</PackageIcon>
-    <PackageIconFullPath>$(MSBuildThisFileDirectory)icon.png</PackageIconFullPath>
-    <PackageReadMeFile>readme.md</PackageReadMeFile>
-    <PackageReadMeFullPath>$(MSBuildProjectDirectory)/readme.md</PackageReadMeFullPath>
-    <NuspecBasePath>$(MSBuildProjectDirectory)</NuspecBasePath>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' != 'CodeQL'">
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' != 'CodeQL'">
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-  </PropertyGroup>
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>latest</LangVersion>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-  </PropertyGroup>
+    <ItemGroup Condition="'$(Configuration)' != 'CodeQL'">
+        <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.39" PrivateAssets="All" />
+        <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50" PrivateAssets="All" />
+    </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)' != 'CodeQL'">
-    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.39" PrivateAssets="All" />
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50" PrivateAssets="All" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="$(PackageIconFullPath)" Pack="true" PackagePath="\"/>
+        <None Include="$(PackageReadMeFullPath)" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Include="$(PackageIconFullPath)" Pack="true" PackagePath="\"/>
-    <None Include="$(PackageReadMeFullPath)" Pack="true" PackagePath="\"/>
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="..\..\.editorconfig" Link=".editorconfig" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
+    <ItemGroup>
+        <AdditionalFiles Include="..\..\version.json" />
+    </ItemGroup>
 </Project>
