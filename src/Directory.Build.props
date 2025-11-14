@@ -29,6 +29,19 @@
         <PackageReference Include="Nerdbank.GitVersioning" PrivateAssets="All" />
     </ItemGroup>
 
+    <!-- Release configuration
+       Enable sbom generation -->
+    <Choose>
+        <When Condition="'$(Configuration)' == 'Release'">
+            <PropertyGroup>
+                <GenerateSBOM>true</GenerateSBOM>
+            </PropertyGroup>
+            <ItemGroup>
+                <PackageReference Include="Microsoft.Sbom.Targets" PrivateAssets="All" />
+            </ItemGroup>
+        </When>
+    </Choose>
+
     <ItemGroup>
         <None Include="$(PackageIconFullPath)" Pack="true" PackagePath="\"/>
         <None Include="$(PackageReadMeFullPath)" Pack="true" PackagePath="\"/>
