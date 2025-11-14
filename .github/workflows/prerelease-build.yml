@@ -1,0 +1,212 @@
+name: Pre-release Build, Test, Sign, Publish
+on:
+  workflow_dispatch:
+    inputs:
+      perform_sign:
+        description: 'Sign'
+        type: boolean
+        required: true
+        default: true
+      perform_publish:
+        description: 'Publish Pre-release'
+        type: boolean
+        required: true
+        default: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_GENERATE_ASPNET_CERTIFICATE: false
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  NUPKG_DIRECTORY: ${{ github.workspace}}/nupkgs
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+
+    name: Build pre-release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+      with:
+        egress-policy: audit
+
+    - name: 'Checkout repository'
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+        persist-credentials: false
+ 
+    - name: 'Setup .NET SDK'
+      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+      with:
+        dotnet-version: | 
+          8.0.x
+          9.0.x
+          10.0.x
+
+    - name: 'Build'
+      run: dotnet build --configuration Release --property:PublicRelease=false
+
+    - name: 'Test'
+      run: dotnet test --configuration Release --no-restore --no-build --property:PublicRelease=false
+
+    - name: 'Pack release'
+      run: dotnet pack --configuration Release --no-restore  --no-build --output ${NUPKG_DIRECTORY} --property:PublicRelease=false
+
+    - name: 'List artifact directory'
+      shell: pwsh
+      run: >
+        Get-ChildItem -Path ${env:NUPKG_DIRECTORY} -Recurse -Force
+
+    - name: 'Extract SBOMs'
+      shell: pwsh
+      run: > 
+        Get-ChildItem -Path ${env:NUPKG_DIRECTORY} -Filter *.nupkg -Force | ForEach-Object { 
+          Expand-Archive $_.FullName "$($_.DirectoryName)/$($_.Basename)" -Force 
+          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json" -Destination "${env:NUPKG_DIRECTORY}/$($_.Basename).spdx.json"
+          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json.sha256" -Destination "${env:NUPKG_DIRECTORY}/$($_.Basename).spdx.json.sha256"
+          Remove-Item "$($_.DirectoryName)/$($_.Basename)" -Force -Recurse }
+
+    - name: 'List artifact directory'
+      shell: pwsh
+      run: >
+        Get-ChildItem -Path ${env:NUPKG_DIRECTORY} -Recurse -Force
+
+    - name: Upload unsigned nupkgs to artifacts
+      id: upload
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      with:
+        name: build-artifacts.zip
+        path: ${{ env.NUPKG_DIRECTORY }}/*
+        retention-days: 7
+
+    - name: Attest build artifacts
+      uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+      with:
+        subject-name: build-artifacts.zip
+        subject-digest: sha256:${{ steps.upload.outputs.artifact-digest }}
+
+
+  sign:
+    name: Sign
+    needs: build
+    runs-on: windows-latest
+    if:  ${{ inputs.perform_sign }} 
+    environment: prelease-signing
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+
+    steps:
+    - name: 'Setup .NET SDK'
+      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+
+    - name: 'Install Sign CLI'
+      run: dotnet tool install --tool-path ./sign --prerelease sign
+
+    - name: 'Gather nupkgs from build output'
+      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      with:
+        name: build-artifacts.zip
+        path : ${{ env.NUPKG_DIRECTORY }}
+
+    - name: List assets to be signed
+      shell: pwsh
+      run: >
+        Get-ChildItem -Path ${env:NUPKG_DIRECTORY} -Include *.nupkg -Recurse -Force
+
+    - name: Authenticate to Azure
+      uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # 2.3.0
+      with:
+        allow-no-subscriptions : true
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Sign
+      shell: pwsh
+      run: >
+        ./sign/sign code trusted-signing *.nupkg --base-directory ${env:NUPKG_DIRECTORY} -tse "${{ secrets.AZURE_TRUSTEDSIGNING_ENDPOINT }}" -tsa "${{ secrets.AZURE_TRUSTEDSIGNING_ACCOUNT }}" -tscp "${{ secrets.AZURE_TRUSTEDSIGNING_CERTIFICATEPROFILE }}"
+
+    - name: Upload signed nupkgs to artifacts
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      id: upload
+      with:
+        name: signed-artifacts.zip
+        path: ${{env.NUPKG_DIRECTORY}}/*
+        retention-days: 7
+
+    - name: Attest signed artifacts
+      uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+      with:
+        subject-name: signed-artifacts.zip
+        subject-digest: sha256:${{ steps.upload.outputs.artifact-digest }}
+
+  publish:
+    name: Publish
+    needs: sign
+    runs-on: ubuntu-latest
+    if:  ${{ inputs.perform_publish }}
+    environment: nightly
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+    - name: 'Harden Runner'
+      uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+      with:
+        egress-policy: audit
+
+    - name: 'Setup .NET SDK'
+      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+
+    - name: 'Gather nupkgs from signing artifacts'
+      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      with:
+        name: signed-artifacts.zip
+        path : ${{ env.NUPKG_DIRECTORY }}
+
+    - name: List assets to be published
+      shell: pwsh
+      run: >
+        Get-ChildItem -Path ${env:NUPKG_DIRECTORY} -Filter *.nupkg -Recurse -Force
+
+    - name: Authenticate to Azure
+      uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # 2.3.0
+      with:
+        allow-no-subscriptions : true
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Setup MyGet and GitHub Packages as NuGet Sources
+      shell: pwsh
+      run: |
+        dotnet new nugetconfig
+        dotnet nuget remove source nuget
+        dotnet nuget add source https://nuget.pkg.github.com/blowdart/index.json --name github
+        dotnet nuget add source https://www.myget.org/F/blowdart/api/v3/index.json --name myget
+
+    - name: Publish NuGet packages to GitHub packages
+      shell: pwsh
+      run: >
+        foreach($file in (Get-ChildItem "${env:NUPKG_DIRECTORY}" -Recurse -Filter *.nupkg)) {
+          dotnet nuget push $file --api-key "${{ secrets.PUBLISH_PACKAGES_PAT }}" --source "github" --skip-duplicate
+        }
+
+    - name: Publish NuGet packages to myget
+      shell: pwsh
+      run: >
+        foreach($file in (Get-ChildItem "${env:NUPKG_DIRECTORY}" -Recurse -Filter *.nupkg)) {
+          dotnet nuget push $file --api-key "${{ secrets.MYGET_APIKEY }}" --source "https://www.myget.org/F/blowdart/api/v2/package" --skip-duplicate
+        }

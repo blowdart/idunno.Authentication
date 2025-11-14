@@ -54,6 +54,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\ci-build.yml = .github\workflows\ci-build.yml
 		.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
 		.github\workflows\dependency-review.yml = .github\workflows\dependency-review.yml
+		.github\workflows\prerelease-build.yml = .github\workflows\prerelease-build.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "idunno.Authentication.Basic.Sample", "samples\idunno.Authentication.Basic.Sample\idunno.Authentication.Basic.Sample.csproj", "{FC9717A4-5F08-F9FB-AD39-110CBEEF8101}"
