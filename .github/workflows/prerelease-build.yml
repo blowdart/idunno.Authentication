@@ -134,13 +134,6 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Show logged in account
-      uses: azure/cli@9f7ce6f37c31b777ec6c6b6d1dfe7db79f497956 # 2.2.0
-      with:
-        azcliversion: latest
-        inlineScript: |
-          az account show
-
     - name: Sign
       shell: pwsh
       run: >
