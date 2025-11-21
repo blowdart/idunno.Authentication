@@ -126,15 +126,13 @@ jobs:
       run: >
         Get-ChildItem -Path ${env:NUPKG_DIRECTORY} -Include *.nupkg -Recurse -Force
 
-    # As we are using a managed identity with no subscription access
-    # we can't use a Subscription ID, and must use the Trusted Signing Tenant ID instead.
     - name: Authenticate to Azure
       uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # 2.3.0
       with:
         allow-no-subscriptions: true
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Sign
       shell: pwsh
