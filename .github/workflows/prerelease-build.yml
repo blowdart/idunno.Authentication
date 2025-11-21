@@ -102,7 +102,7 @@ jobs:
     needs: build
     runs-on: windows-latest
     if:  ${{ inputs.perform_sign }} 
-    environment: prelease-signing
+    environment: prerelease
     permissions:
       attestations: write
       contents: read
@@ -129,7 +129,6 @@ jobs:
     - name: Authenticate to Azure
       uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # 2.3.0
       with:
-        allow-no-subscriptions : true
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -137,7 +136,11 @@ jobs:
     - name: Sign
       shell: pwsh
       run: >
-        ./sign/sign code trusted-signing *.nupkg --base-directory ${env:NUPKG_DIRECTORY} -tse "${{ secrets.AZURE_TRUSTEDSIGNING_ENDPOINT }}" -tsa "${{ secrets.AZURE_TRUSTEDSIGNING_ACCOUNT }}" -tscp "${{ secrets.AZURE_TRUSTEDSIGNING_CERTIFICATEPROFILE }}"
+        ./sign/sign code trusted-signing *.nupkg
+        --base-directory ${env:NUPKG_DIRECTORY}
+        -tse "${{ secrets.AZURE_TRUSTEDSIGNING_ENDPOINT }}"
+        -tsa "${{ secrets.AZURE_TRUSTEDSIGNING_ACCOUNT }}"
+        -tscp "${{ secrets.AZURE_TRUSTEDSIGNING_CERTIFICATEPROFILE }}"
 
     - name: Upload signed nupkgs to artifacts
       uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
