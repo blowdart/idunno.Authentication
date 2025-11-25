@@ -1,4 +1,4 @@
-﻿name: GitHub Actions Security Analysis
+name: GitHub Actions Security Analysis
 
 on:
   workflow_dispatch:
