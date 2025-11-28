@@ -1,4 +1,4 @@
-﻿# idunno.Authentication.SharedKey
+# idunno.Authentication.SharedKey
  
 This project contains an implementation of Shared Key Authentication for ASP.NET. 
 It was inspired by the Shared Key [implementation](https://docs.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key) that Azure uses as one of its options for access to 

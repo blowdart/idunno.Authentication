@@ -96,7 +96,6 @@ jobs:
         subject-name: build-artifacts.zip
         subject-digest: sha256:${{ steps.upload.outputs.artifact-digest }}
 
-
   sign:
     name: Sign
     needs: build
@@ -129,7 +128,6 @@ jobs:
     - name: Authenticate to Azure
       uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # 2.3.0
       with:
-        allow-no-subscriptions: true
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -162,7 +160,6 @@ jobs:
     needs: sign
     runs-on: ubuntu-latest
     if:  ${{ inputs.perform_publish }}
-    environment: nightly
     permissions:
       contents: read
       packages: write
@@ -186,14 +183,6 @@ jobs:
       shell: pwsh
       run: >
         Get-ChildItem -Path ${env:NUPKG_DIRECTORY} -Filter *.nupkg -Recurse -Force
-
-    - name: Authenticate to Azure
-      uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # 2.3.0
-      with:
-        allow-no-subscriptions : true
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Setup MyGet and GitHub Packages as NuGet Sources
       shell: pwsh

@@ -1,4 +1,4 @@
-﻿# idunno.Authentication.Basic
+# idunno.Authentication.Basic
 
 This project contains an implementation of [Basic Authentication](https://tools.ietf.org/html/rfc1945#section-11) for ASP.NET. 
 

@@ -1,4 +1,4 @@
-﻿# idunno.Authentication
+# idunno.Authentication
 
 This repository contains a collection of various authentication mechanisms for ASP.NET Core, including
 
