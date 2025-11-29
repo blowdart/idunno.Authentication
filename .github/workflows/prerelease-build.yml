@@ -137,8 +137,8 @@ jobs:
       run: >
         ./sign/sign code trusted-signing *.nupkg
         --base-directory ${env:NUPKG_DIRECTORY}
-        -tse "${{ secrets.AZURE_TRUSTEDSIGNING_ENDPOINT }}"
         -tsa "${{ secrets.AZURE_TRUSTEDSIGNING_ACCOUNT }}"
+        -tse "${{ secrets.AZURE_TRUSTEDSIGNING_ACCOUNTURI }}"
         -tscp "${{ secrets.AZURE_TRUSTEDSIGNING_CERTIFICATEPROFILE }}"
 
     - name: Upload signed nupkgs to artifacts
