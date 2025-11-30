@@ -86,14 +86,14 @@ jobs:
       id: upload
       uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
-        name: build-artifacts.zip
+        name: build-artifacts
         path: ${{ env.NUPKG_DIRECTORY }}/*
         retention-days: 7
 
     - name: Attest build artifacts
       uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
       with:
-        subject-name: build-artifacts.zip
+        subject-name: build-artifacts
         subject-digest: sha256:${{ steps.upload.outputs.artifact-digest }}
 
   sign:
@@ -117,7 +117,7 @@ jobs:
     - name: 'Gather nupkgs from build output'
       uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
       with:
-        name: build-artifacts.zip
+        name: build-artifacts
         path : ${{ env.NUPKG_DIRECTORY }}
 
     - name: List assets to be signed
@@ -128,7 +128,6 @@ jobs:
     - name: Authenticate to Azure
       uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # 2.3.0
       with:
-        allow-no-subscriptions : true
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -146,14 +145,14 @@ jobs:
       uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       id: upload
       with:
-        name: signed-artifacts.zip
+        name: signed-artifacts
         path: ${{env.NUPKG_DIRECTORY}}/*
         retention-days: 7
 
     - name: Attest signed artifacts
       uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
       with:
-        subject-name: signed-artifacts.zip
+        subject-name: signed-artifacts
         subject-digest: sha256:${{ steps.upload.outputs.artifact-digest }}
 
   publish:
@@ -177,7 +176,7 @@ jobs:
     - name: 'Gather nupkgs from signing artifacts'
       uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
       with:
-        name: signed-artifacts.zip
+        name: signed-artifacts
         path : ${{ env.NUPKG_DIRECTORY }}
 
     - name: List assets to be published
