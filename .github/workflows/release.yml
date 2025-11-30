@@ -91,7 +91,7 @@ jobs:
     needs: build
     runs-on: windows-latest
     if:  ${{ inputs.perform_sign }} 
-    environment: prerelease
+    environment: release
     permissions:
       attestations: write
       contents: read
