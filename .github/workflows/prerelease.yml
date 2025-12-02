@@ -99,7 +99,7 @@ jobs:
 
     steps:
     - name: 'Setup .NET SDK'
-      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
 
     - name: 'Install Sign CLI'
       run: dotnet tool install --tool-path ./sign --prerelease sign
@@ -156,7 +156,7 @@ jobs:
         egress-policy: audit
 
     - name: 'Setup .NET SDK'
-      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
 
     - name: 'Gather nupkgs from signing artifacts'
       uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
