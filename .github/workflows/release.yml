@@ -58,10 +58,10 @@ jobs:
       run: dotnet build --configuration Release --property:PublicRelease=true
 
     - name: 'Test'
-      run: dotnet test --configuration Release --no-restore --no-build --property:PublicRelease=true
+      run: dotnet test --configuration Release --no-build --property:PublicRelease=true
 
     - name: 'Pack release'
-      run: dotnet pack --configuration Release --no-restore  --no-build --output ${OUTPUT_DIRECTORY} --property:PublicRelease=true
+      run: dotnet pack --configuration Release --no-build --output ${OUTPUT_DIRECTORY} --property:PublicRelease=true
 
     - name: 'Extract SBOMs'
       shell: pwsh
