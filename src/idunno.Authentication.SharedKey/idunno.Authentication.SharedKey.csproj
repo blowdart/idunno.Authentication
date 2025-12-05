@@ -5,21 +5,8 @@
         <PackageTags>aspnetcore;authentication;security</PackageTags>
         <Nullable>enable</Nullable>
         <Configurations>Debug;Release;CodeQL</Configurations>
+        <TargetFrameworks>net6.0;net8.0;net9.0;net10.0</TargetFrameworks>
     </PropertyGroup>
-
-    <Choose>
-        <When Condition="'$(Configuration)' != 'CodeQL'">
-            <PropertyGroup>
-                <TargetFrameworks>net6.0;net8.0;net9.0;net10.0</TargetFrameworks>
-            </PropertyGroup>
-        </When>
-        <Otherwise>
-            <PropertyGroup>
-                <!-- CodeQL doesn't do .NET 10 yet -->
-                <TargetFramework>net9.0</TargetFramework>
-            </PropertyGroup>
-        </Otherwise>
-    </Choose>
 
     <PropertyGroup>
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
