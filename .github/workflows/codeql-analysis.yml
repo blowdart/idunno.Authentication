@@ -63,7 +63,6 @@ jobs:
       uses: github/codeql-action/init@fdbfb4d2750291e159f0156def62b853c2798ca2 # v4.31.5
       with:
         languages: ${{ matrix.language }}
-        config-file: ./.github/codeql-config.yaml
 
     # We can't use autobuild because we want to restrict the build to just src folder solutions
     # and avoid triggering deterministic builds and git commit based versioning

@@ -1,22 +1,22 @@
 {
-  "$schema": "https://raw.githubusercontent.com/AArnott/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
-  "version": "3.0.0",
-  "publicReleaseRefSpec": [
-    "^refs\/heads\/rel\/.*$"
-  ],
+    "$schema": "https://raw.githubusercontent.com/AArnott/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
+    "version": "3.0.0",
+    "publicReleaseRefSpec": [
+        "^refs/heads/main$"
+    ],
 
-  "nugetPackageVersion": {
-    "semVer": 2
-  },
+    "nugetPackageVersion": {
+        "semVer": 2
+    },
 
-  "cloudBuild": {
-    "buildNumber": {
-      "enabled": true,
-      "setVersionVariables": true,
-      "includeCommitId": {
-        "when": "nonPublicReleaseOnly",
-        "where": "buildMetadata"
-      }
+    "cloudBuild": {
+        "buildNumber": {
+            "enabled": true,
+            "setVersionVariables": true,
+            "includeCommitId": {
+                "when": "nonPublicReleaseOnly",
+                "where": "buildMetadata"
+            }
+        }
     }
-  }
 }
