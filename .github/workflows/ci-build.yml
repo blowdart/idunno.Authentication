@@ -73,7 +73,7 @@ jobs:
       run: dotnet test --no-build --restore --collect:"XPlat Code Coverage" --logger junit --settings .runsettings
 
     - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action@27d65e188ec43221b20d26de30f4892fad91df2f # v2.22.0
+      uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2.23.0
       if: always()
       with:
         files: "test/**/TestResults.xml"
