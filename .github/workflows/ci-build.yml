@@ -30,7 +30,7 @@ jobs:
       checks: write
     steps:
     - name: 'Harden Runner'
-      uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+      uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b # v2.15.0
       with:
         egress-policy: audit
 
@@ -41,7 +41,7 @@ jobs:
         persist-credentials: false
  
     - name: 'Setup .NET SDK'
-      uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
+      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
       with:
         dotnet-version: | 
           10.0.x
@@ -58,7 +58,7 @@ jobs:
       run: dotnet build --configuration Debug --no-restore
 
     - name: Upload Build Artifacts
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: build-artifacts
         path: |
@@ -79,7 +79,7 @@ jobs:
         files: "test/**/TestResults.xml"
 
     - name: Upload Test Artifacts
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: test-results
         path: "test/**/TestResults.xml"
