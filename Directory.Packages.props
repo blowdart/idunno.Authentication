@@ -11,14 +11,15 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-        <PackageVersion Include="Microsoft.AspNetCore.Authentication" Version="2.3.0" />
+        <PackageVersion Include="System.Security.Cryptography.Xml" Version="8.0.3" />
+        <PackageVersion Include="Microsoft.AspNetCore.Authentication" Version="2.3.9" />
         <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
         <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.1.1" />
     </ItemGroup>
 
     <!-- Test projects -->
     <ItemGroup>
-        <PackageVersion Include="coverlet.collector" Version="8.0.1" />
+        <PackageVersion Include="coverlet.collector" Version="10.0.0" />
         <PackageVersion Include="JunitXml.TestLogger" Version="7.1.0" />
     </ItemGroup>
 
