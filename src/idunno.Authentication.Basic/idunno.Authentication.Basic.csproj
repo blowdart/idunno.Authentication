@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Description>ASP.NET Core middleware that enables an application to support basic authentication.</Description>
         <PackageTags>aspnetcore;authentication;security;basicauth</PackageTags>
@@ -13,6 +13,7 @@
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
         <PackageReference Include="Microsoft.AspNetCore.Authentication" />
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+        <PackageReference Include="System.Security.Cryptography.Xml" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
