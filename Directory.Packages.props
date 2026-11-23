@@ -16,7 +16,7 @@
     </ItemGroup>
     <!-- Test projects -->
     <ItemGroup>
-        <PackageVersion Include="coverlet.collector" Version="10.1.0" />
+        <PackageVersion Include="coverlet.collector" Version="10.1.1" />
         <PackageVersion Include="JunitXml.TestLogger" Version="7.1.0" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
